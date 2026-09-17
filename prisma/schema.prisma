@@ -29,6 +29,7 @@ model Institution {
   users         User[]
   professionals Professional[]
   healthInsurances HealthInsurance[]
+  transactions  Transaction[]
 }
 
 // Obra social que una institución acepta. Configurable por Encargado (la
@@ -74,6 +75,10 @@ model User {
   uploadedDocuments PatientDocument[] @relation("UploadedDocuments")
 
   antecedents PatientAntecedents?
+
+  invoicesReceived Invoice[]     @relation("InvoicePatient")
+  invoicesIssued   Invoice[]     @relation("InvoiceIssuedBy")
+  transactionsLogged Transaction[]
 
   @@index([institutionId])
 }
@@ -238,7 +243,50 @@ model Appointment {
   patient      User         @relation(fields: [patientId], references: [id])
 
   clinicalNote ClinicalNote?
+  invoice      Invoice?
 
   @@index([professionalId, date])
   @@index([patientId])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// Caja: ingresos/egresos cargados a mano por el staff. No hay conciliación
+// automática con Mercado Pago todavía porque esa integración es una
+// simulación (ver Professional.mercadoPagoConnected) sin webhooks reales.
+model Transaction {
+  id            String          @id @default(cuid())
+  institutionId String?
+  type          TransactionType
+  concept       String
+  amount        Int
+  date          DateTime        @default(now())
+  createdById   String?
+  createdAt     DateTime        @default(now())
+
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+
+  @@index([institutionId, date])
+}
+
+// Comprobante interno, NO es una factura electrónica de AFIP: emitir
+// facturas fiscales de verdad requiere CUIT + certificado digital +
+// homologación de punto de venta (WSFE) que este sistema todavía no tiene
+// configurado. Sirve como recibo para el paciente mientras tanto.
+model Invoice {
+  id             String   @id @default(cuid())
+  appointmentId  String?  @unique
+  patientId      String
+  concept        String
+  amount         Int
+  createdById    String?
+  createdAt      DateTime @default(now())
+
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  patient     User         @relation("InvoicePatient", fields: [patientId], references: [id])
+  createdBy   User?        @relation("InvoiceIssuedBy", fields: [createdById], references: [id])
 }

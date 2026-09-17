@@ -38,9 +38,9 @@ El corazón de un sistema médico real.
 
 ## Fase 3 — Financiero/administrativo
 
-- [ ] **Facturación electrónica (AFIP)**: necesaria en cuanto haya cobro formal a pacientes particulares. Complejidad regulatoria alta (WSFE, CAE).
-- [ ] **Finanzas**: caja, ingresos/egresos, conciliación con Mercado Pago.
-- [ ] **Compras**: baja prioridad salvo que haya insumos que reponer (ligado a farmacia, fase 4).
+- [x] **Facturación electrónica (AFIP)** — **no implementada de verdad, y no se puede** sin datos fiscales reales del cliente (CUIT, certificado digital, punto de venta homologado en WSFE). Lo que sí se construyó: un modelo `Invoice` de "comprobante interno" (no válido ante AFIP, con disclaimer explícito en cada comprobante) generado con un click desde el Historial de un turno, con vistas de listado y detalle/impresión en `/secretaria`, `/encargado` y `/admin` bajo `/facturacion`. Cuando haya credenciales AFIP reales, este es el punto de enganche para reemplazar la generación por una llamada real a WSFE.
+- [x] **Finanzas**: caja de ingresos/egresos cargados a mano por el staff (`Transaction`), con balance mensual. Vistas en `/secretaria/finanzas` y `/encargado/finanzas` (su institución) y `/admin/finanzas` (todas, con selector de institución al cargar). No hay conciliación automática con Mercado Pago porque esa integración sigue siendo una simulación (sin webhooks reales, ver `/profesional/pagos`).
+- [ ] **Compras**: se deja afuera, tal como marca este mismo roadmap — sin cliente concreto que la pida todavía (depende de farmacia, Fase 4).
 
 ## Fase 4 — Solo para clínicas/hospitales
 

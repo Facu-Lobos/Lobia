@@ -3,6 +3,7 @@ import { requireSecretary } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { cancelAppointment } from "@/actions/appointments";
 import { markArrived } from "@/actions/appointment-management";
+import { generateInvoice } from "@/actions/invoices";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { AppointmentCalendar, parseMonthParam } from "@/components/AppointmentCalendar";
 
@@ -68,7 +69,7 @@ export default async function SecretariaTurnosPage({
   const [appointments, monthAppointments] = await Promise.all([
     prisma.appointment.findMany({
       where: { professional: institutionFilter },
-      include: { professional: true, patient: true },
+      include: { professional: true, patient: true, invoice: true },
       orderBy: { date: "asc" },
     }),
     prisma.appointment.findMany({
@@ -76,7 +77,7 @@ export default async function SecretariaTurnosPage({
         professional: institutionFilter,
         date: { gte: monthStart, lt: monthEnd },
       },
-      include: { professional: true, patient: true },
+      include: { professional: true, patient: true, invoice: true },
       orderBy: { date: "asc" },
     }),
   ]);
@@ -214,9 +215,33 @@ export default async function SecretariaTurnosPage({
                   </p>
                   <p className="text-muted">{formatDate(a.date)}</p>
                 </div>
-                <span>
-                  {a.status === "CANCELLED" ? "Cancelado" : "Realizado"}
-                </span>
+                <div className="flex items-center gap-2">
+                  {a.status !== "CANCELLED" && (
+                    <>
+                      {a.invoice ? (
+                        <Link
+                          href={`/secretaria/facturacion/${a.invoice.id}`}
+                          className="rounded-md border border-border px-2 py-1 text-xs opacity-100 hover:border-primary"
+                        >
+                          Ver comprobante
+                        </Link>
+                      ) : (
+                        <form action={generateInvoice}>
+                          <input type="hidden" name="appointmentId" value={a.id} />
+                          <button
+                            type="submit"
+                            className="rounded-md border border-border px-2 py-1 text-xs opacity-100 hover:border-primary"
+                          >
+                            Generar comprobante
+                          </button>
+                        </form>
+                      )}
+                    </>
+                  )}
+                  <span>
+                    {a.status === "CANCELLED" ? "Cancelado" : "Realizado"}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

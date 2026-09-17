@@ -17,6 +17,8 @@ export default async function SecretariaLayout({
           { href: "/secretaria/asignar-turno", label: "Asignar turno" },
           { href: "/secretaria/turnos", label: "Turnos" },
           { href: "/secretaria/sala-espera", label: "Sala de espera" },
+          { href: "/secretaria/finanzas", label: "Finanzas" },
+          { href: "/secretaria/facturacion", label: "Facturación" },
         ].map((item) => (
           <Link
             key={item.href}
