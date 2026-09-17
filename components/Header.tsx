@@ -58,6 +58,12 @@ export default async function Header() {
             </Link>
           )}
 
+          {user?.role === "MANAGER" && (
+            <Link href="/encargado" className="text-white/80 hover:text-white">
+              Encargado
+            </Link>
+          )}
+
           {user ? (
             <div className="flex items-center gap-3">
               <span className="text-white/60">Hola, {user.name}</span>
