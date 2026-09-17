@@ -34,6 +34,14 @@ export default async function SecretariaPacienteDetailPage({
       <p className="mt-1 text-muted">
         {patient.email} {patient.phone ? `· ${patient.phone}` : ""}
       </p>
+      {patient.healthInsurance && (
+        <p className="mt-1 text-sm text-muted">
+          Obra social: {patient.healthInsurance}
+          {patient.healthInsuranceNumber
+            ? ` (afiliado ${patient.healthInsuranceNumber})`
+            : ""}
+        </p>
+      )}
 
       {subido && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">

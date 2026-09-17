@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { createBooking } from "@/lib/booking";
+import { sendCancellationNotice } from "@/lib/appointment-notifications";
 
 export async function bookAppointment(formData: FormData) {
   const user = await requireUser();
@@ -33,7 +34,7 @@ export async function cancelAppointment(formData: FormData) {
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    include: { professional: true },
+    include: { professional: true, patient: true },
   });
 
   if (!appointment) {
@@ -66,6 +67,13 @@ export async function cancelAppointment(formData: FormData) {
   await prisma.appointment.update({
     where: { id: appointmentId },
     data: { status: "CANCELLED" },
+  });
+
+  await sendCancellationNotice({
+    patientEmail: appointment.patient.email,
+    patientName: appointment.patient.name,
+    professionalName: appointment.professional.fullName,
+    date: appointment.date,
   });
 
   revalidatePath("/mis-turnos");

@@ -16,6 +16,7 @@ export default async function EncargadoLayout({
           { href: "/encargado/profesionales", label: "Profesionales" },
           { href: "/encargado/turnos", label: "Turnos" },
           { href: "/encargado/sala-espera", label: "Sala de espera" },
+          { href: "/encargado/obras-sociales", label: "Obras sociales" },
           { href: "/encargado/personal", label: "Personal" },
         ].map((item) => (
           <Link

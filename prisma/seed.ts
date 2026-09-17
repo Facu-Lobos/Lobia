@@ -33,6 +33,17 @@ async function main() {
   const sedeCentro = institutions.find((i) => i.name === "Sede Centro")!;
   const sedeNorte = institutions.find((i) => i.name === "Sede Norte")!;
 
+  const healthInsuranceNames = ["OSDE", "Swiss Medical", "Galeno", "IOMA", "PAMI"];
+  for (const institution of institutions) {
+    for (const name of healthInsuranceNames) {
+      await prisma.healthInsurance.upsert({
+        where: { institutionId_name: { institutionId: institution.id, name } },
+        update: {},
+        create: { institutionId: institution.id, name },
+      });
+    }
+  }
+
   const specialtyNames = [
     "Clínica Médica",
     "Pediatría",

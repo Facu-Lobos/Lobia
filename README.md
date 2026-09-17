@@ -51,14 +51,19 @@ components/                AppointmentCalendar y demás componentes compartidos
 prisma/                    schema.prisma, migraciones y seed
 ```
 
-## Recordatorios de turno por email
+## Emails (confirmación, cancelación y recordatorios)
 
-`GET /api/cron/reminders` envía un recordatorio por email a los turnos que ocurren dentro de las próximas 24hs (una sola vez por turno). No hay scheduler propio: hay que dispararlo desde afuera (Vercel Cron, cron-job.org, GitHub Actions, etc.) cada 15-60 minutos.
+- Al reservar o cancelar un turno (`lib/booking.ts`, `actions/appointments.ts`) se manda un email instantáneo al paciente. Si falla el envío, no rompe la reserva/cancelación (sólo se loguea el error).
+- `GET /api/cron/reminders` envía un recordatorio a los turnos que ocurren dentro de las próximas 24hs (una sola vez por turno, gracias a `reminderSentAt`). No hay scheduler propio: hay que dispararlo desde afuera (Vercel Cron, cron-job.org, GitHub Actions, etc.) cada 15-60 minutos.
 
 Variables de entorno (`.env`, todas opcionales):
 
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — sin esto, los emails se loguean en consola en vez de enviarse (útil para probar en dev).
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — sin esto, los emails se loguean en consola en vez de enviarse (útil para probar en dev). Para Gmail: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER=tu@gmail.com`, `SMTP_PASS=<contraseña de aplicación de 16 caracteres>` (no la contraseña normal — hay que generarla en la cuenta de Google con verificación en 2 pasos activada).
 - `CRON_SECRET` — si está definida, el endpoint exige el header `Authorization: Bearer <CRON_SECRET>`.
+
+## Mi perfil (paciente)
+
+Desde `/mis-turnos/perfil` el paciente edita nombre, teléfono, obra social y número de afiliado (`actions/patient.ts`). El email no es editable ahí (es el identificador de login).
 
 ## Scripts
 

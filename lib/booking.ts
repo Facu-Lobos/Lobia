@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { isSlotAvailableForBooking } from "@/lib/availability";
+import { sendBookingConfirmation } from "@/lib/appointment-notifications";
 
 export type CreateBookingResult =
   | { ok: true; appointmentId: string }
@@ -38,8 +39,17 @@ export async function createBooking({
       }
       return tx.appointment.create({
         data: { professionalId, patientId, date },
+        include: { patient: true, professional: true },
       });
     });
+
+    await sendBookingConfirmation({
+      patientEmail: appointment.patient.email,
+      patientName: appointment.patient.name,
+      professionalName: appointment.professional.fullName,
+      date: appointment.date,
+    });
+
     return { ok: true, appointmentId: appointment.id };
   } catch {
     return { ok: false, reason: "ocupado" };

@@ -1,25 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
-
-const DAY_NAMES = [
-  "domingo",
-  "lunes",
-  "martes",
-  "miércoles",
-  "jueves",
-  "viernes",
-  "sábado",
-];
-
-function formatAppointmentDate(date: Date) {
-  return `${DAY_NAMES[date.getDay()]} ${String(date.getDate()).padStart(
-    2,
-    "0"
-  )}/${String(date.getMonth() + 1).padStart(2, "0")} a las ${String(
-    date.getHours()
-  ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
+import { formatAppointmentDate } from "@/lib/appointment-notifications";
 
 // Manda recordatorio por email a los turnos que ocurren dentro de las
 // próximas 24hs y todavía no lo recibieron. `reminderSentAt` evita

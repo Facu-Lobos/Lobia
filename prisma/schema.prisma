@@ -28,6 +28,21 @@ model Institution {
 
   users         User[]
   professionals Professional[]
+  healthInsurances HealthInsurance[]
+}
+
+// Obra social que una institución acepta. Configurable por Encargado (la
+// suya) o Admin (cualquiera) — alimenta el desplegable de "Mi perfil" del
+// paciente.
+model HealthInsurance {
+  id            String   @id @default(cuid())
+  institutionId String
+  name          String
+  createdAt     DateTime @default(now())
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, name])
 }
 
 enum AppointmentStatus {
@@ -43,6 +58,10 @@ model User {
   phone        String?
   role         Role     @default(PATIENT)
   createdAt    DateTime @default(now())
+
+  // Sólo tiene sentido para pacientes; se completan desde "Mi perfil".
+  healthInsurance       String?
+  healthInsuranceNumber String?
 
   // Solo tiene sentido para MANAGER y SECRETARY (a qué institución pertenecen).
   institutionId String?

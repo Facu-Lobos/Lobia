@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { cancelAppointment } from "@/actions/appointments";
@@ -62,7 +63,15 @@ export default async function MisTurnosPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Mis Turnos</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Mis Turnos</h1>
+        <Link
+          href="/mis-turnos/perfil"
+          className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+        >
+          Mi perfil
+        </Link>
+      </div>
 
       {reservado && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
