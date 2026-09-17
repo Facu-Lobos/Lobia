@@ -243,10 +243,12 @@ export async function updatePaymentSettings(formData: FormData) {
   const professionalId = String(formData.get("professionalId") ?? "");
   await assertOwnProfessional(professionalId, institutionId);
   const depositAmountRaw = String(formData.get("depositAmount") ?? "").trim();
+  const feeAmountRaw = String(formData.get("feeAmount") ?? "").trim();
 
   await updatePaymentSettingsForProfessional(professionalId, {
     mercadoPagoConnected: formData.get("mercadoPagoConnected") === "on",
     depositAmount: depositAmountRaw ? Number(depositAmountRaw) : null,
+    feeAmount: feeAmountRaw ? Number(feeAmountRaw) : null,
   });
 
   revalidatePath(`/encargado/profesionales/${professionalId}`);

@@ -65,12 +65,20 @@ export default async function MisTurnosPage({
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Mis Turnos</h1>
-        <Link
-          href="/mis-turnos/perfil"
-          className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
-        >
-          Mi perfil
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/mis-turnos/historia-clinica"
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+          >
+            Mi historia clínica
+          </Link>
+          <Link
+            href="/mis-turnos/perfil"
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+          >
+            Mi perfil
+          </Link>
+        </div>
       </div>
 
       {reservado && (

@@ -33,8 +33,8 @@ Bajo esfuerzo, alto impacto inmediato.
 
 El corazón de un sistema médico real.
 
-- [ ] **HCE (Historia Clínica Electrónica)**: antecedentes, evoluciones, diagnósticos por consulta. La pieza más grande y de mayor valor; todo lo demás (imágenes, farmacia) depende de esto.
-- [ ] **Gestión con profesionales**: liquidación de honorarios por turno atendido (ya existe el vínculo Professional↔Appointment, falta cálculo/reporte).
+- [x] **HCE (Historia Clínica Electrónica)** — versión inicial: `PatientAntecedents` (alergias, enfermedades crónicas, medicación habitual, compartido entre todos los profesionales que atendieron al paciente) y `ClinicalNote` (motivo, diagnóstico, notas, tratamiento — una por turno). El especialista carga ambas desde `/profesional/turnos/[id]/historia-clinica` (con contexto del historial previo del paciente, incluso de otros profesionales); el paciente las ve (sin las notas internas de examen) en `/mis-turnos/historia-clinica`. Pendiente para una v2: imágenes/adjuntos dentro de la evolución, plantillas por especialidad, permisos más finos que "cualquier especialista que lo atendió alguna vez".
+- [x] **Gestión con profesionales**: liquidación de honorarios. Se agregó `Professional.feeAmount` (configurable por el propio profesional o por admin/encargado) y se cuenta como "atendido" todo turno con `completedAt` seteado (o sea que pasó por la Sala de Espera hasta el final, Fase 1). Vistas: `/profesional/liquidacion` (propia), `/encargado/liquidacion` (su institución), `/admin/liquidacion` (todas). Nota: turnos viejos, de antes de que existiera la Sala de Espera, no tienen `completedAt` y no cuentan aunque se vean como "Realizado" en Turnos — es esperable, no un bug.
 
 ## Fase 3 — Financiero/administrativo
 

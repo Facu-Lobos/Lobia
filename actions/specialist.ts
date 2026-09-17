@@ -17,6 +17,10 @@ import {
   updateMessagesForProfessional,
   updatePaymentSettingsForProfessional,
 } from "@/lib/professional-mutations";
+import {
+  upsertPatientAntecedents,
+  upsertClinicalNoteForAppointment,
+} from "@/lib/clinical";
 
 export async function upsertOwnScheduleSlot(formData: FormData) {
   const { professional } = await requireSpecialist();
@@ -182,12 +186,67 @@ export async function markOwnCompleted(formData: FormData) {
 export async function updateOwnPaymentSettings(formData: FormData) {
   const { professional } = await requireSpecialist();
   const depositAmountRaw = String(formData.get("depositAmount") ?? "").trim();
+  const feeAmountRaw = String(formData.get("feeAmount") ?? "").trim();
 
   await updatePaymentSettingsForProfessional(professional.id, {
     mercadoPagoConnected: formData.get("mercadoPagoConnected") === "on",
     depositAmount: depositAmountRaw ? Number(depositAmountRaw) : null,
+    feeAmount: feeAmountRaw ? Number(feeAmountRaw) : null,
   });
 
   revalidatePath("/profesional/pagos");
   redirect("/profesional/pagos?actualizado=1");
+}
+
+function emptyToNull(value: string) {
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+export async function updatePatientAntecedentsFromAppointment(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const historiaPath = `/profesional/turnos/${appointmentId}/historia-clinica`;
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+  if (!appointment || appointment.professionalId !== professional.id) {
+    redirect("/profesional/turnos?error=noautorizado");
+  }
+
+  await upsertPatientAntecedents(appointment.patientId, {
+    allergies: emptyToNull(String(formData.get("allergies") ?? "")),
+    chronicConditions: emptyToNull(String(formData.get("chronicConditions") ?? "")),
+    currentMedications: emptyToNull(String(formData.get("currentMedications") ?? "")),
+    notes: emptyToNull(String(formData.get("antecedentsNotes") ?? "")),
+  });
+
+  revalidatePath(historiaPath);
+  revalidatePath("/mis-turnos/historia-clinica");
+  redirect(`${historiaPath}?actualizado=1`);
+}
+
+export async function upsertClinicalNote(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const historiaPath = `/profesional/turnos/${appointmentId}/historia-clinica`;
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+  if (!appointment || appointment.professionalId !== professional.id) {
+    redirect("/profesional/turnos?error=noautorizado");
+  }
+
+  await upsertClinicalNoteForAppointment(appointmentId, {
+    reason: emptyToNull(String(formData.get("reason") ?? "")),
+    diagnosis: emptyToNull(String(formData.get("diagnosis") ?? "")),
+    notes: emptyToNull(String(formData.get("notes") ?? "")),
+    treatment: emptyToNull(String(formData.get("treatment") ?? "")),
+  });
+
+  revalidatePath(historiaPath);
+  revalidatePath("/mis-turnos/historia-clinica");
+  redirect(`${historiaPath}?guardado=1`);
 }

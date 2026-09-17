@@ -18,6 +18,7 @@ export default async function ProfesionalLayout({
           { href: "/profesional/sala-espera", label: "Sala de espera" },
           { href: "/profesional/mensajes", label: "Mensajes" },
           { href: "/profesional/pagos", label: "Pagos" },
+          { href: "/profesional/liquidacion", label: "Liquidación" },
         ].map((item) => (
           <Link
             key={item.href}

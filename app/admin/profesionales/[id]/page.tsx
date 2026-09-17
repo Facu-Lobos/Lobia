@@ -608,6 +608,20 @@ export default async function AdminProfesionalDetailPage({
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
           </div>
+          <div>
+            <label htmlFor="feeAmount" className="text-sm font-medium">
+              Honorario por turno atendido (opcional)
+            </label>
+            <input
+              id="feeAmount"
+              name="feeAmount"
+              type="number"
+              min={0}
+              step={100}
+              defaultValue={professional.feeAmount ?? ""}
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
           <button
             type="submit"
             className="self-start rounded-md bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSpecialist } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { cancelAppointment } from "@/actions/appointments";
@@ -128,6 +129,12 @@ export default async function ProfesionalTurnosPage({
                       WhatsApp
                     </a>
                   )}
+                  <Link
+                    href={`/profesional/turnos/${a.id}/historia-clinica`}
+                    className="rounded-md border border-border px-3 py-1.5 hover:border-primary"
+                  >
+                    Historia clínica
+                  </Link>
                   <form action={cancelAppointment}>
                     <input type="hidden" name="appointmentId" value={a.id} />
                     <button
@@ -160,9 +167,19 @@ export default async function ProfesionalTurnosPage({
                   <p className="font-medium">{a.patient.name}</p>
                   <p className="text-muted">{formatDate(a.date)}</p>
                 </div>
-                <span>
-                  {a.status === "CANCELLED" ? "Cancelado" : "Realizado"}
-                </span>
+                <div className="flex items-center gap-2">
+                  {a.status !== "CANCELLED" && (
+                    <Link
+                      href={`/profesional/turnos/${a.id}/historia-clinica`}
+                      className="rounded-md border border-border px-3 py-1.5 opacity-100 hover:border-primary"
+                    >
+                      Historia clínica
+                    </Link>
+                  )}
+                  <span>
+                    {a.status === "CANCELLED" ? "Cancelado" : "Realizado"}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

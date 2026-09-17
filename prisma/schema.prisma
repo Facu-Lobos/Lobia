@@ -73,7 +73,37 @@ model User {
   documents         PatientDocument[] @relation("PatientDocuments")
   uploadedDocuments PatientDocument[] @relation("UploadedDocuments")
 
+  antecedents PatientAntecedents?
+
   @@index([institutionId])
+}
+
+// Antecedentes clínicos del paciente: no cambian por turno, los edita
+// cualquier especialista que lo atienda. Núcleo de la HCE (Fase 2).
+model PatientAntecedents {
+  id                 String   @id @default(cuid())
+  patientId          String   @unique
+  allergies          String?
+  chronicConditions  String?
+  currentMedications String?
+  notes              String?
+  updatedAt          DateTime @updatedAt
+
+  patient User @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Evolución de una consulta puntual — a lo sumo una por turno.
+model ClinicalNote {
+  id            String   @id @default(cuid())
+  appointmentId String   @unique
+  reason        String?
+  diagnosis     String?
+  notes         String?
+  treatment     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 }
 
 // Resultado/informe (labo, imágenes, etc.) que un miembro del staff sube
@@ -120,6 +150,7 @@ model Professional {
 
   mercadoPagoConnected Boolean @default(false)
   depositAmount        Int?
+  feeAmount            Int? // Honorario por turno atendido, para liquidación.
 
   institutionId String?
   institution   Institution? @relation(fields: [institutionId], references: [id])
@@ -205,6 +236,8 @@ model Appointment {
 
   professional Professional @relation(fields: [professionalId], references: [id])
   patient      User         @relation(fields: [patientId], references: [id])
+
+  clinicalNote ClinicalNote?
 
   @@index([professionalId, date])
   @@index([patientId])

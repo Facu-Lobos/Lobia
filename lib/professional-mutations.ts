@@ -145,6 +145,7 @@ export async function updateMessagesForProfessional(
 export type PaymentSettingsInput = {
   mercadoPagoConnected: boolean;
   depositAmount: number | null;
+  feeAmount: number | null;
 };
 
 export async function updatePaymentSettingsForProfessional(
