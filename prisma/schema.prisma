@@ -156,6 +156,7 @@ model Professional {
   mercadoPagoConnected Boolean @default(false)
   depositAmount        Int?
   feeAmount            Int? // Honorario por turno atendido, para liquidación.
+  consultingRoom       String? // Ej: "Consultorio 3" — para la pantalla de llamador.
 
   institutionId String?
   institution   Institution? @relation(fields: [institutionId], references: [id])

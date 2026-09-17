@@ -44,6 +44,7 @@ export async function updateProfessional(formData: FormData) {
   const bio = String(formData.get("bio") ?? "").trim();
   const active = formData.get("active") === "on";
   const institutionId = String(formData.get("institutionId") ?? "") || null;
+  const consultingRoom = String(formData.get("consultingRoom") ?? "").trim();
 
   if (!fullName) {
     redirect(`/admin/profesionales/${id}?error=nombre`);
@@ -51,7 +52,13 @@ export async function updateProfessional(formData: FormData) {
 
   await prisma.professional.update({
     where: { id },
-    data: { fullName, bio: bio || null, active, institutionId },
+    data: {
+      fullName,
+      bio: bio || null,
+      active,
+      institutionId,
+      consultingRoom: consultingRoom || null,
+    },
   });
 
   revalidatePath("/admin/profesionales");

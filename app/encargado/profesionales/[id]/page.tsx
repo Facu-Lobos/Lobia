@@ -151,6 +151,22 @@ export default async function EncargadoProfesionalDetailPage({
             />
             Activo (visible para pacientes)
           </label>
+          <div>
+            <label htmlFor="consultingRoom" className="text-sm font-medium">
+              Consultorio
+            </label>
+            <input
+              id="consultingRoom"
+              name="consultingRoom"
+              defaultValue={professional.consultingRoom ?? ""}
+              placeholder="Ej: Consultorio 3"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+            <p className="mt-1 text-xs text-muted">
+              Se muestra en la pantalla de llamador cuando el paciente pasa a
+              &quot;en consulta&quot;.
+            </p>
+          </div>
           <button
             type="submit"
             className="self-start rounded-md bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover"
