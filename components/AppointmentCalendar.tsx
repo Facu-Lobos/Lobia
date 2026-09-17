@@ -49,6 +49,31 @@ export function parseMonthParam(value: string | undefined): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
+export function dayParam(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// Parsea "?date=YYYY-MM-DD"; si falta o es inválido, usa hoy. Siempre a
+// medianoche local.
+export function parseDayParam(value: string | undefined): Date {
+  if (value) {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      const day = Number(match[3]);
+      const date = new Date(year, monthIndex, day);
+      if (!Number.isNaN(date.getTime())) {
+        date.setHours(0, 0, 0, 0);
+        return date;
+      }
+    }
+  }
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
+
 export function AppointmentCalendar({
   appointments,
   month,

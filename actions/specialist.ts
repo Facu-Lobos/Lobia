@@ -134,9 +134,15 @@ function revalidateSalaEspera(professionalId: string) {
   revalidatePath(`/profesionales/${professionalId}`);
 }
 
+function returnToOrDefault(formData: FormData) {
+  const returnTo = formData.get("returnTo");
+  return returnTo ? String(returnTo) : "/profesional/sala-espera";
+}
+
 export async function markOwnArrived(formData: FormData) {
   const { professional } = await requireSpecialist();
   const appointmentId = String(formData.get("appointmentId") ?? "");
+  const returnTo = returnToOrDefault(formData);
 
   await prisma.appointment.updateMany({
     where: { id: appointmentId, professionalId: professional.id, status: "BOOKED" },
@@ -144,12 +150,13 @@ export async function markOwnArrived(formData: FormData) {
   });
 
   revalidateSalaEspera(professional.id);
-  redirect("/profesional/sala-espera");
+  redirect(returnTo);
 }
 
 export async function markOwnCalled(formData: FormData) {
   const { professional } = await requireSpecialist();
   const appointmentId = String(formData.get("appointmentId") ?? "");
+  const returnTo = returnToOrDefault(formData);
 
   await prisma.appointment.updateMany({
     where: {
@@ -162,12 +169,13 @@ export async function markOwnCalled(formData: FormData) {
   });
 
   revalidateSalaEspera(professional.id);
-  redirect("/profesional/sala-espera");
+  redirect(returnTo);
 }
 
 export async function markOwnCompleted(formData: FormData) {
   const { professional } = await requireSpecialist();
   const appointmentId = String(formData.get("appointmentId") ?? "");
+  const returnTo = returnToOrDefault(formData);
 
   await prisma.appointment.updateMany({
     where: {
@@ -180,7 +188,7 @@ export async function markOwnCompleted(formData: FormData) {
   });
 
   revalidateSalaEspera(professional.id);
-  redirect("/profesional/sala-espera");
+  redirect(returnTo);
 }
 
 export async function updateOwnPaymentSettings(formData: FormData) {

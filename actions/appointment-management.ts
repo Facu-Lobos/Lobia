@@ -27,12 +27,14 @@ export async function markArrived(formData: FormData) {
   const { user, institutionId } = await requireAppointmentStaff();
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const base = redirectBaseFor(user.role);
+  const returnToRaw = formData.get("returnTo");
+  const returnTo = returnToRaw ? String(returnToRaw) : null;
 
   if (
     institutionId &&
     !(await appointmentInInstitution(appointmentId, institutionId))
   ) {
-    redirect(`${base}?error=noautorizado`);
+    redirect(`${returnTo ?? base}?error=noautorizado`);
   }
 
   await prisma.appointment.updateMany({
@@ -41,6 +43,11 @@ export async function markArrived(formData: FormData) {
   });
 
   revalidateTurnosPaths();
+  if (returnTo) {
+    redirect(
+      `${returnTo}${returnTo.includes("?") ? "&" : "?"}llegada=1`
+    );
+  }
   redirect(`${base}?llegada=1`);
 }
 

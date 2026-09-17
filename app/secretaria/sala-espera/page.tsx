@@ -1,33 +1,121 @@
+import Link from "next/link";
 import { requireSecretary } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { toMidnight } from "@/lib/professional-mutations";
 import { markArrived, markCalled, markCompleted } from "@/actions/appointment-management";
 import { WaitingRoom } from "@/components/WaitingRoom";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { dayParam, parseDayParam } from "@/components/AppointmentCalendar";
 
-export default async function SecretariaSalaEsperaPage() {
+const DAY_NAMES = [
+  "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
+];
+
+function formatDayLabel(date: Date) {
+  return `${DAY_NAMES[date.getDay()]} ${String(date.getDate()).padStart(2, "0")}/${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+export default async function SecretariaSalaEsperaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string; profesionalId?: string }>;
+}) {
   const { institutionId } = await requireSecretary();
+  const { date: dateParamValue, profesionalId } = await searchParams;
 
-  const todayStart = toMidnight(new Date());
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
+  const day = parseDayParam(dateParamValue);
+  const dayStart = day;
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  const prevDay = new Date(dayStart);
+  prevDay.setDate(prevDay.getDate() - 1);
+  const nextDay = new Date(dayStart);
+  nextDay.setDate(nextDay.getDate() + 1);
+
   const institutionFilter = institutionId ? { institutionId } : {};
+  const profFilter = profesionalId
+    ? { professionalId: profesionalId }
+    : {};
+  const qs = profesionalId ? `&profesionalId=${profesionalId}` : "";
 
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      professional: institutionFilter,
-      status: "BOOKED",
-      date: { gte: todayStart, lt: todayEnd },
-    },
-    include: { professional: true, patient: true },
-    orderBy: { date: "asc" },
-  });
+  const [appointments, professionals] = await Promise.all([
+    prisma.appointment.findMany({
+      where: {
+        professional: institutionFilter,
+        ...profFilter,
+        status: "BOOKED",
+        date: { gte: dayStart, lt: dayEnd },
+      },
+      include: { professional: true, patient: true },
+      orderBy: { date: "asc" },
+    }),
+    prisma.professional.findMany({
+      where: institutionFilter,
+      orderBy: { fullName: "asc" },
+    }),
+  ]);
 
   return (
     <div>
       <AutoRefresh />
       <h1 className="text-2xl font-semibold tracking-tight">Sala de espera</h1>
-      <p className="mt-1 text-muted">Turnos de hoy, en vivo.</p>
+      <p className="mt-1 text-muted">En vivo, por día y profesional.</p>
+
+      <form method="get" className="mt-4 flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor="date" className="text-sm font-medium">
+            Fecha
+          </label>
+          <input
+            id="date"
+            name="date"
+            type="date"
+            defaultValue={dayParam(day)}
+            className="mt-1 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label htmlFor="profesionalId" className="text-sm font-medium">
+            Profesional
+          </label>
+          <select
+            id="profesionalId"
+            name="profesionalId"
+            defaultValue={profesionalId ?? ""}
+            className="mt-1 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          >
+            <option value="">Todos</option>
+            {professionals.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.fullName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="rounded-md bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover"
+        >
+          Ver
+        </button>
+      </form>
+
+      <div className="mt-4 flex items-center gap-3 text-sm">
+        <Link
+          href={`/secretaria/sala-espera?date=${dayParam(prevDay)}${qs}`}
+          className="rounded-md border border-border px-2 py-1 hover:border-primary"
+        >
+          ← Día anterior
+        </Link>
+        <span className="font-medium">{formatDayLabel(day)}</span>
+        <Link
+          href={`/secretaria/sala-espera?date=${dayParam(nextDay)}${qs}`}
+          className="rounded-md border border-border px-2 py-1 hover:border-primary"
+        >
+          Día siguiente →
+        </Link>
+      </div>
 
       <div className="mt-6">
         <WaitingRoom
@@ -40,7 +128,7 @@ export default async function SecretariaSalaEsperaPage() {
             calledAt: a.calledAt,
             completedAt: a.completedAt,
           }))}
-          returnTo="/secretaria/sala-espera"
+          returnTo={`/secretaria/sala-espera?date=${dayParam(day)}${qs}`}
           markArrivedAction={markArrived}
           markCalledAction={markCalled}
           markCompletedAction={markCompleted}
