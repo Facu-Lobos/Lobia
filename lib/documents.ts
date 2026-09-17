@@ -1,14 +1,8 @@
 import "server-only";
-import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { supabaseAdmin, PATIENT_DOCUMENTS_BUCKET } from "@/lib/supabase";
 
-const UPLOADS_ROOT = path.join(
-  /*turbopackIgnore: true*/ process.cwd(),
-  "uploads",
-  "patients"
-);
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15MB
 
 function sanitizeFileName(name: string) {
@@ -47,13 +41,17 @@ export async function saveUploadedDocument({
     return { ok: false, error: "El archivo no puede superar los 15MB." };
   }
 
-  const patientDir = path.join(UPLOADS_ROOT, patientId);
-  await mkdir(patientDir, { recursive: true });
-
-  const storedName = `${randomUUID()}-${sanitizeFileName(file.name)}`;
-  const storagePath = path.join(patientDir, storedName);
+  const storagePath = `patients/${patientId}/${randomUUID()}-${sanitizeFileName(file.name)}`;
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(storagePath, bytes);
+
+  const { error } = await supabaseAdmin.storage
+    .from(PATIENT_DOCUMENTS_BUCKET)
+    .upload(storagePath, bytes, {
+      contentType: file.type || "application/octet-stream",
+    });
+  if (error) {
+    return { ok: false, error: "No se pudo subir el archivo. Probá de nuevo." };
+  }
 
   await prisma.patientDocument.create({
     data: {
@@ -62,10 +60,7 @@ export async function saveUploadedDocument({
       title: title.trim(),
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
-      storagePath: path.relative(
-        /*turbopackIgnore: true*/ process.cwd(),
-        storagePath
-      ),
+      storagePath,
     },
   });
 
@@ -73,15 +68,18 @@ export async function saveUploadedDocument({
 }
 
 export async function readDocumentFile(storagePath: string) {
-  return readFile(
-    path.join(/*turbopackIgnore: true*/ process.cwd(), storagePath)
-  );
+  const { data, error } = await supabaseAdmin.storage
+    .from(PATIENT_DOCUMENTS_BUCKET)
+    .download(storagePath);
+  if (error) throw error;
+  return Buffer.from(await data.arrayBuffer());
 }
 
 export async function deletePatientDocument(id: string) {
   const doc = await prisma.patientDocument.delete({ where: { id } });
-  await unlink(
-    path.join(/*turbopackIgnore: true*/ process.cwd(), doc.storagePath)
-  ).catch(() => {});
+  await supabaseAdmin.storage
+    .from(PATIENT_DOCUMENTS_BUCKET)
+    .remove([doc.storagePath])
+    .catch(() => {});
   return doc;
 }

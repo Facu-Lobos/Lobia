@@ -14,7 +14,10 @@ Motor de agenda y turnos multi-institución:
 
 Lo que falta y motiva este roadmap: historia clínica, facturación, farmacia, internación, liquidación a obras sociales — el grueso de lo que ofrece un sistema como SAM.
 
-**Infraestructura (17/09/2026):** base de datos migrada de SQLite a Postgres alojado en Supabase (ver sección "Base de datos" en el README) — paso necesario para poder desplegar en un hosting real (Vercel u otro), ya que SQLite es un archivo local que no sobrevive en un filesystem efímero. Pendiente: mover los documentos subidos (`uploads/`, hoy en disco local) a un storage persistente como Supabase Storage, antes de desplegar en serio.
+**Infraestructura (17/09/2026):** listo para desplegar en Vercel.
+- Base de datos migrada de SQLite a Postgres alojado en Supabase, **con datos incluidos** (no sólo el esquema) — ver sección "Base de datos" en el README.
+- Documentos de pacientes movidos de disco local a Supabase Storage (bucket privado, `SUPABASE_SERVICE_ROLE_KEY`) — ver sección "Documentos de pacientes" en el README. Esto era el otro bloqueante para un filesystem efímero tipo Vercel.
+- `vercel.json` agregado con el Cron Job del recordatorio de 24hs, para que se dispare solo apenas se despliegue (antes había que configurarlo a mano en un scheduler externo).
 
 ## Criterio de priorización
 

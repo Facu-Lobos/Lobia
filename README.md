@@ -15,7 +15,7 @@ Ver [CHANGELOG.md](./CHANGELOG.md) para el detalle completo de lo construido y l
 
 `DATABASE_URL` en `.env` apunta al **Session pooler** de Supabase (puerto `5432`, host `aws-0-<región>.pooler.supabase.com`), no a la conexión directa (`db.<ref>.supabase.co`) — esa última sólo tiene IPv6 y suele fallar desde redes sin salida IPv6. El string del pooler se consigue desde el botón **Connect** del dashboard de Supabase → pestaña "Session pooler" (o "Transaction pooler" si se agrega `?pgbouncer=true` más adelante para runtime serverless).
 
-Migrado desde SQLite el 17/09/2026; la base sólo tiene los datos del seed (la migración no copió los datos previos de `dev.db`, que se puede borrar cuando se confirme que no hace falta).
+Migrado desde SQLite el 17/09/2026, **con los datos** (no sólo el esquema): se copiaron todas las filas de `dev.db` tabla por tabla, preservando IDs, a una base Postgres recién limpiada. `dev.db` ya no se usa pero se dejó en el filesystem por las dudas.
 
 ## Primeros pasos
 
@@ -60,13 +60,22 @@ prisma/                    schema.prisma, migraciones y seed
 ## Emails (confirmación, cancelación y recordatorios)
 
 - Al reservar o cancelar un turno (`lib/booking.ts`, `actions/appointments.ts`) se manda un email instantáneo al paciente (destinatario: el email del paciente, nunca el remitente). Si falla el envío, no rompe la reserva/cancelación (sólo se loguea el error).
-- `GET /api/cron/reminders` envía un recordatorio a los turnos que ocurren dentro de las próximas 24hs (una sola vez por turno, gracias a `reminderSentAt`). No hay scheduler propio: hay que dispararlo desde afuera (Vercel Cron, cron-job.org, GitHub Actions, etc.) cada 15-60 minutos — **esto todavía no está configurado**, sólo el envío instantáneo (reserva/cancelación) funciona de punta a punta hoy.
+- `GET /api/cron/reminders` envía un recordatorio a los turnos que ocurren dentro de las próximas 24hs (una sola vez por turno, gracias a `reminderSentAt`). Se dispara solo, una vez por día, vía **Vercel Cron** (`vercel.json`) — funciona automáticamente en cuanto el proyecto esté desplegado en Vercel con `CRON_SECRET` seteado (Vercel manda ese header solo). En local (`npm run dev`) no hay nada que lo dispare; hay que pegarle al endpoint a mano para probarlo.
 - **Estado actual: envío real activo y verificado** (17/09/2026) vía Gmail SMTP, remitente `lobiainfo@gmail.com`. Las credenciales viven sólo en `.env` local (gitignoreado, nunca se commitean).
 
 Variables de entorno (`.env`, todas opcionales — sin ellas, los emails se loguean en consola en vez de enviarse, útil para dev):
 
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. Para Gmail: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER=tu@gmail.com`, `SMTP_PASS=<contraseña de aplicación de 16 caracteres, sin espacios>` — **no** la contraseña normal de la cuenta: se genera en Google → Seguridad → Verificación en 2 pasos (activarla primero) → Contraseñas de aplicaciones.
-- `CRON_SECRET` — si está definida, el endpoint exige el header `Authorization: Bearer <CRON_SECRET>`.
+- `CRON_SECRET` — si está definida, el endpoint exige el header `Authorization: Bearer <CRON_SECRET>` (lo manda Vercel Cron automáticamente cuando esta variable está seteada en el proyecto).
+
+## Documentos de pacientes (Supabase Storage)
+
+Los archivos que sube el staff (`/secretaria/pacientes/[id]`) se guardan en un bucket **privado** de Supabase Storage (`patient-documents`), no en disco local — necesario para andar en un hosting serverless como Vercel, donde el filesystem es efímero. Se sirven siempre a través de `/api/documents/[id]` (autenticado, nunca por URL pública directa de Supabase).
+
+Variables de entorno:
+
+- `SUPABASE_URL` — `https://<project-ref>.supabase.co`.
+- `SUPABASE_SERVICE_ROLE_KEY` — key de servidor (bypassea RLS). **Nunca** exponerla al cliente/navegador; sólo se usa en `lib/documents.ts` y `lib/supabase.ts`, ambos server-only.
 
 ## Mi perfil (paciente)
 
