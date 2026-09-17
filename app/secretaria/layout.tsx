@@ -14,6 +14,8 @@ export default async function SecretariaLayout({
         {[
           { href: "/secretaria", label: "Inicio" },
           { href: "/secretaria/pacientes", label: "Pacientes" },
+          { href: "/secretaria/profesionales", label: "Profesionales" },
+          { href: "/secretaria/especialidades", label: "Especialidades" },
           { href: "/secretaria/asignar-turno", label: "Asignar turno" },
           { href: "/secretaria/turnos", label: "Turnos" },
           { href: "/secretaria/sala-espera", label: "Sala de espera" },
