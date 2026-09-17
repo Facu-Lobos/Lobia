@@ -7,15 +7,21 @@ Ver [CHANGELOG.md](./CHANGELOG.md) para el detalle completo de lo construido y l
 ## Stack
 
 - [Next.js 16](https://nextjs.org) (App Router) + TypeScript
-- [Prisma 7](https://www.prisma.io) + SQLite (desarrollo local)
+- [Prisma 7](https://www.prisma.io) + [Supabase](https://supabase.com) (Postgres alojado, vía `@prisma/adapter-pg`)
 - [NextAuth.js v5](https://authjs.dev) (Credentials + JWT)
 - Tailwind CSS 4
+
+## Base de datos (Supabase Postgres)
+
+`DATABASE_URL` en `.env` apunta al **Session pooler** de Supabase (puerto `5432`, host `aws-0-<región>.pooler.supabase.com`), no a la conexión directa (`db.<ref>.supabase.co`) — esa última sólo tiene IPv6 y suele fallar desde redes sin salida IPv6. El string del pooler se consigue desde el botón **Connect** del dashboard de Supabase → pestaña "Session pooler" (o "Transaction pooler" si se agrega `?pgbouncer=true` más adelante para runtime serverless).
+
+Migrado desde SQLite el 17/09/2026; la base sólo tiene los datos del seed (la migración no copió los datos previos de `dev.db`, que se puede borrar cuando se confirme que no hace falta).
 
 ## Primeros pasos
 
 ```bash
 npm install
-npx prisma migrate dev   # crea la base de datos SQLite
+npx prisma migrate dev   # aplica las migraciones contra Supabase
 npx prisma db seed       # carga datos de prueba
 npm run dev
 ```

@@ -14,6 +14,8 @@ Motor de agenda y turnos multi-institución:
 
 Lo que falta y motiva este roadmap: historia clínica, facturación, farmacia, internación, liquidación a obras sociales — el grueso de lo que ofrece un sistema como SAM.
 
+**Infraestructura (17/09/2026):** base de datos migrada de SQLite a Postgres alojado en Supabase (ver sección "Base de datos" en el README) — paso necesario para poder desplegar en un hosting real (Vercel u otro), ya que SQLite es un archivo local que no sobrevive en un filesystem efímero. Pendiente: mover los documentos subidos (`uploads/`, hoy en disco local) a un storage persistente como Supabase Storage, antes de desplegar en serio.
+
 ## Criterio de priorización
 
 1. Cercanía al núcleo actual (agenda/turnos) — menor esfuerzo, valor inmediato.
