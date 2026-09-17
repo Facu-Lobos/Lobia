@@ -63,12 +63,20 @@ export default async function SecretariaPacientesPage({
                   {p.email} {p.phone ? `· ${p.phone}` : ""}
                 </p>
               </div>
-              <a
-                href={`/secretaria/asignar-turno?patientId=${p.id}`}
-                className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
-              >
-                Asignar turno
-              </a>
+              <div className="flex gap-2">
+                <a
+                  href={`/secretaria/pacientes/${p.id}`}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+                >
+                  Ficha
+                </a>
+                <a
+                  href={`/secretaria/asignar-turno?patientId=${p.id}`}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+                >
+                  Asignar turno
+                </a>
+              </div>
             </div>
           ))}
           {q && patients.length === 0 && (

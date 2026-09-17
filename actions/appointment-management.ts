@@ -18,6 +18,9 @@ function revalidateTurnosPaths() {
   revalidatePath("/admin/turnos");
   revalidatePath("/encargado/turnos");
   revalidatePath("/secretaria/turnos");
+  revalidatePath("/admin/sala-espera");
+  revalidatePath("/encargado/sala-espera");
+  revalidatePath("/secretaria/sala-espera");
 }
 
 export async function markArrived(formData: FormData) {
@@ -39,6 +42,48 @@ export async function markArrived(formData: FormData) {
 
   revalidateTurnosPaths();
   redirect(`${base}?llegada=1`);
+}
+
+export async function markCalled(formData: FormData) {
+  const { institutionId } = await requireAppointmentStaff();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/secretaria/sala-espera");
+
+  if (
+    institutionId &&
+    !(await appointmentInInstitution(appointmentId, institutionId))
+  ) {
+    redirect(`${returnTo}?error=noautorizado`);
+  }
+
+  await prisma.appointment.updateMany({
+    where: { id: appointmentId, status: "BOOKED", arrivedAt: { not: null } },
+    data: { calledAt: new Date() },
+  });
+
+  revalidateTurnosPaths();
+  redirect(returnTo);
+}
+
+export async function markCompleted(formData: FormData) {
+  const { institutionId } = await requireAppointmentStaff();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/secretaria/sala-espera");
+
+  if (
+    institutionId &&
+    !(await appointmentInInstitution(appointmentId, institutionId))
+  ) {
+    redirect(`${returnTo}?error=noautorizado`);
+  }
+
+  await prisma.appointment.updateMany({
+    where: { id: appointmentId, status: "BOOKED", calledAt: { not: null } },
+    data: { completedAt: new Date() },
+  });
+
+  revalidateTurnosPaths();
+  redirect(returnTo);
 }
 
 export async function rescheduleAppointment(formData: FormData) {

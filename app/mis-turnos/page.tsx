@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { cancelAppointment } from "@/actions/appointments";
+import { listDocumentsForPatient } from "@/lib/documents";
 
 const DAY_NAMES = [
   "Domingo",
@@ -33,7 +34,7 @@ export default async function MisTurnosPage({
   const user = await requireUser();
   const { reservado, cancelado, profesionalId } = await searchParams;
 
-  const [appointments, messageProfessional] = await Promise.all([
+  const [appointments, messageProfessional, documents] = await Promise.all([
     prisma.appointment.findMany({
       where: { patientId: user.id },
       include: { professional: true },
@@ -42,6 +43,7 @@ export default async function MisTurnosPage({
     profesionalId
       ? prisma.professional.findUnique({ where: { id: profesionalId } })
       : Promise.resolve(null),
+    listDocumentsForPatient(user.id),
   ]);
 
   const customMessage = reservado
@@ -105,6 +107,33 @@ export default async function MisTurnosPage({
                 </button>
               </form>
             </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="font-medium">Mis documentos</h2>
+        {documents.length === 0 && (
+          <p className="mt-2 text-sm text-muted">
+            Todavía no tenés documentos disponibles.
+          </p>
+        )}
+        <div className="mt-3 space-y-2">
+          {documents.map((doc) => (
+            <a
+              key={doc.id}
+              href={`/api/documents/${doc.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3 hover:border-primary"
+            >
+              <span className="font-medium">{doc.title}</span>
+              <span className="text-sm text-muted">
+                {String(doc.createdAt.getDate()).padStart(2, "0")}/
+                {String(doc.createdAt.getMonth() + 1).padStart(2, "0")}/
+                {doc.createdAt.getFullYear()}
+              </span>
+            </a>
           ))}
         </div>
       </div>

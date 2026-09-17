@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSpecialist } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
 import {
   isValidScheduleSlotInput,
   upsertScheduleSlotForProfessional,
@@ -122,6 +123,60 @@ export async function updateOwnMessages(formData: FormData) {
   revalidatePath("/profesional/mensajes");
   revalidatePath(`/profesionales/${professional.id}`);
   redirect("/profesional/mensajes?actualizado=1");
+}
+
+function revalidateSalaEspera(professionalId: string) {
+  revalidatePath("/profesional/sala-espera");
+  revalidatePath(`/profesionales/${professionalId}`);
+}
+
+export async function markOwnArrived(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+
+  await prisma.appointment.updateMany({
+    where: { id: appointmentId, professionalId: professional.id, status: "BOOKED" },
+    data: { arrivedAt: new Date() },
+  });
+
+  revalidateSalaEspera(professional.id);
+  redirect("/profesional/sala-espera");
+}
+
+export async function markOwnCalled(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+
+  await prisma.appointment.updateMany({
+    where: {
+      id: appointmentId,
+      professionalId: professional.id,
+      status: "BOOKED",
+      arrivedAt: { not: null },
+    },
+    data: { calledAt: new Date() },
+  });
+
+  revalidateSalaEspera(professional.id);
+  redirect("/profesional/sala-espera");
+}
+
+export async function markOwnCompleted(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+
+  await prisma.appointment.updateMany({
+    where: {
+      id: appointmentId,
+      professionalId: professional.id,
+      status: "BOOKED",
+      calledAt: { not: null },
+    },
+    data: { completedAt: new Date() },
+  });
+
+  revalidateSalaEspera(professional.id);
+  redirect("/profesional/sala-espera");
 }
 
 export async function updateOwnPaymentSettings(formData: FormData) {

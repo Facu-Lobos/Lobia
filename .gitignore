@@ -45,3 +45,6 @@ next-env.d.ts
 # database
 *.db
 *.db-journal
+
+# documentos subidos para pacientes (contenido real, no código)
+/uploads

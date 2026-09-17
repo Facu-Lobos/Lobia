@@ -51,7 +51,29 @@ model User {
   appointments Appointment[]
   professional Professional?
 
+  documents         PatientDocument[] @relation("PatientDocuments")
+  uploadedDocuments PatientDocument[] @relation("UploadedDocuments")
+
   @@index([institutionId])
+}
+
+// Resultado/informe (labo, imágenes, etc.) que un miembro del staff sube
+// para que el paciente lo vea desde su portal. Portal de consulta al
+// paciente (Fase 1 del roadmap) — precursor mínimo de la HCE (Fase 2).
+model PatientDocument {
+  id           String   @id @default(cuid())
+  patientId    String
+  title        String
+  fileName     String
+  mimeType     String
+  storagePath  String
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  patient    User  @relation("PatientDocuments", fields: [patientId], references: [id], onDelete: Cascade)
+  uploadedBy User? @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+
+  @@index([patientId])
 }
 
 model Specialty {
@@ -157,6 +179,9 @@ model Appointment {
   date           DateTime
   status         AppointmentStatus @default(BOOKED)
   arrivedAt      DateTime?
+  calledAt       DateTime?
+  completedAt    DateTime?
+  reminderSentAt DateTime?
   createdAt      DateTime          @default(now())
 
   professional Professional @relation(fields: [professionalId], references: [id])

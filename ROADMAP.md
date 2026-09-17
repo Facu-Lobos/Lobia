@@ -25,9 +25,9 @@ Lo que falta y motiva este roadmap: historia clínica, facturación, farmacia, i
 
 Bajo esfuerzo, alto impacto inmediato.
 
-- [ ] **Recepción de pacientes**: sala de espera / cola visual y estado del turno en tiempo real (ya existe `arrivedAt` en secretaría).
-- [ ] **Notificaciones automáticas**: recordatorios de turno por email/WhatsApp (ya existe `whatsappMessageTemplate`, falta el envío automatizado).
-- [ ] **Portal de consulta al paciente**: ver resultados/informes propios. Requiere un modelo mínimo de "documento clínico"; es la puerta de entrada a la HCE.
+- [x] **Recepción de pacientes**: sala de espera / cola visual y estado del turno en tiempo real (ya existe `arrivedAt` en secretaría). Implementado como vista "Sala de espera" (secretaría, encargado, admin y profesional) con 4 estados: pendiente → esperando → en consulta → atendido, refrescada automáticamente cada 15s.
+- [x] **Notificaciones automáticas**: recordatorios de turno por email (ya existe `whatsappMessageTemplate`/wa.me para WhatsApp manual; automatizar WhatsApp de verdad requiere la API de Meta, pago y aprobación de negocio — fuera de alcance por ahora). Implementado como `GET /api/cron/reminders`, a disparar desde un scheduler externo (Vercel Cron, cron-job.org, etc.), con `reminderSentAt` para no duplicar envíos. Ver sección "Recordatorios de turno por email" en el README.
+- [x] **Portal de consulta al paciente**: ver resultados/informes propios. Implementado con el modelo `PatientDocument` (título + archivo, subido por secretaría desde la ficha del paciente en `/secretaria/pacientes/[id]`, servido de forma autenticada vía `/api/documents/[id]`) y una sección "Mis documentos" en `/mis-turnos`. Es la puerta de entrada a la HCE (Fase 2).
 
 ## Fase 2 — Núcleo clínico
 

@@ -51,6 +51,15 @@ components/                AppointmentCalendar y demás componentes compartidos
 prisma/                    schema.prisma, migraciones y seed
 ```
 
+## Recordatorios de turno por email
+
+`GET /api/cron/reminders` envía un recordatorio por email a los turnos que ocurren dentro de las próximas 24hs (una sola vez por turno). No hay scheduler propio: hay que dispararlo desde afuera (Vercel Cron, cron-job.org, GitHub Actions, etc.) cada 15-60 minutos.
+
+Variables de entorno (`.env`, todas opcionales):
+
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — sin esto, los emails se loguean en consola en vez de enviarse (útil para probar en dev).
+- `CRON_SECRET` — si está definida, el endpoint exige el header `Authorization: Bearer <CRON_SECRET>`.
+
 ## Scripts
 
 - `npm run dev` — servidor de desarrollo

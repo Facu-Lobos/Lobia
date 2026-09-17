@@ -17,6 +17,7 @@ export default async function AdminLayout({
           { href: "/admin/especialidades", label: "Especialidades" },
           { href: "/admin/profesionales", label: "Profesionales" },
           { href: "/admin/turnos", label: "Turnos" },
+          { href: "/admin/sala-espera", label: "Sala de espera" },
           { href: "/admin/personal", label: "Personal" },
         ].map((item) => (
           <Link
