@@ -1,6 +1,7 @@
 import { requireManager } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { createSecretaryForInstitution } from "@/actions/manager";
+import { PasswordInput } from "@/components/PasswordInput";
 
 const ERROR_MESSAGES: Record<string, string> = {
   nombre: "Ingresá el nombre.",
@@ -93,10 +94,9 @@ export default async function EncargadoPersonalPage({
             <label htmlFor="password" className="text-sm font-medium">
               Contraseña
             </label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={6}
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createSecretary, createManager } from "@/actions/admin-staff";
+import { PasswordInput } from "@/components/PasswordInput";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
@@ -109,10 +110,9 @@ export default async function AdminPersonalPage({
             <label htmlFor="password" className="text-sm font-medium">
               Contraseña
             </label>
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={6}
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
@@ -189,10 +189,9 @@ export default async function AdminPersonalPage({
               <label htmlFor="managerPassword" className="text-sm font-medium">
                 Contraseña
               </label>
-              <input
+              <PasswordInput
                 id="managerPassword"
                 name="password"
-                type="password"
                 required
                 minLength={6}
                 className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"

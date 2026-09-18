@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { isValidUsername } from "@/lib/staff";
 import {
   isValidScheduleSlotInput,
   upsertScheduleSlotForProfessional,
@@ -18,17 +19,20 @@ import {
   updateMessagesForProfessional,
   updatePaymentSettingsForProfessional,
   parseProfessionalIdentityInput,
+  generateProfessionalCredentials,
 } from "@/lib/professional-mutations";
 
 export async function createProfessional(formData: FormData) {
   await requireAdmin();
-  const fullName = String(formData.get("fullName") ?? "").trim();
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const institutionId = String(formData.get("institutionId") ?? "") || null;
   const identity = parseProfessionalIdentityInput(formData);
   const specialtyId = String(formData.get("specialtyId") ?? "").trim();
 
-  if (!fullName) {
+  if (!firstName || !lastName) {
     redirect("/admin/profesionales?error=nombre");
   }
 
@@ -43,19 +47,32 @@ export async function createProfessional(formData: FormData) {
     redirect("/admin/profesionales?error=horario");
   }
 
-  const professional = await prisma.professional.create({
-    data: {
-      fullName,
-      bio: bio || null,
-      institution: institutionId ? { connect: { id: institutionId } } : undefined,
-      ...identity,
-      ...(specialtyId ? { specialties: { create: { specialtyId } } } : {}),
-      ...(hasSchedule ? { schedules: { create: scheduleInput } } : {}),
-    },
+  // El profesional entra sin email: usuario = apellido, contraseña =
+  // apellido en minúscula + "1234" (ver generateProfessionalCredentials).
+  const { username, rawPassword, passwordHash } =
+    await generateProfessionalCredentials(lastName);
+
+  const professional = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: { name: fullName, username, passwordHash, role: "SPECIALIST" },
+    });
+    return tx.professional.create({
+      data: {
+        fullName,
+        bio: bio || null,
+        institution: institutionId ? { connect: { id: institutionId } } : undefined,
+        user: { connect: { id: user.id } },
+        ...identity,
+        ...(specialtyId ? { specialties: { create: { specialtyId } } } : {}),
+        ...(hasSchedule ? { schedules: { create: scheduleInput } } : {}),
+      },
+    });
   });
 
   revalidatePath("/admin/profesionales");
-  redirect(`/admin/profesionales/${professional.id}?creado=1`);
+  redirect(
+    `/admin/profesionales/${professional.id}?creado=1&usuario=${encodeURIComponent(username)}&clave=${encodeURIComponent(rawPassword)}`
+  );
 }
 
 export async function updateProfessional(formData: FormData) {
@@ -264,12 +281,12 @@ export async function updatePaymentSettings(formData: FormData) {
 export async function grantPortalAccess(formData: FormData) {
   await requireAdmin();
   const professionalId = String(formData.get("professionalId") ?? "");
-  const email = String(formData.get("email") ?? "")
+  const username = String(formData.get("username") ?? "")
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !email.includes("@") || !password || password.length < 6) {
+  if (!isValidUsername(username) || !password || password.length < 6) {
     redirect(`/admin/profesionales/${professionalId}?error=acceso`);
   }
 
@@ -280,9 +297,9 @@ export async function grantPortalAccess(formData: FormData) {
     redirect(`/admin/profesionales/${professionalId}?error=acceso`);
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
-    redirect(`/admin/profesionales/${professionalId}?error=emailexistente`);
+    redirect(`/admin/profesionales/${professionalId}?error=usuarioexistente`);
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -292,7 +309,7 @@ export async function grantPortalAccess(formData: FormData) {
     const user = await tx.user.create({
       data: {
         name: fullName,
-        email,
+        username,
         passwordHash,
         role: "SPECIALIST",
       },

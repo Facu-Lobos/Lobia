@@ -1,5 +1,30 @@
 import "server-only";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+function slugifyUsernameBase(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // saca acentos
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+// Acceso automático del profesional: usuario = apellido, contraseña =
+// apellido en minúscula + "1234" (se lo comunica quien crea la ficha). Si el
+// apellido ya está en uso, se le agrega un número al final.
+export async function generateProfessionalCredentials(lastName: string) {
+  const base = slugifyUsernameBase(lastName) || "profesional";
+  let username = base;
+  let suffix = 1;
+  while (await prisma.user.findUnique({ where: { username } })) {
+    suffix += 1;
+    username = `${base}${suffix}`;
+  }
+  const rawPassword = `${base}1234`;
+  const passwordHash = await bcrypt.hash(rawPassword, 10);
+  return { username, rawPassword, passwordHash };
+}
 
 export type ScheduleSlotInput = {
   dayOfWeek: number;

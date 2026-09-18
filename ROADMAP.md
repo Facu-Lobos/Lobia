@@ -6,7 +6,9 @@ Este documento prioriza la incorporación de nuevos módulos al sistema de turno
 
 Motor de agenda y turnos multi-institución:
 
-- Login (18/09/2026): paciente y especialista se identifican con **email**; secretaria, encargado y admin lo hacen con **username** (sin email) — `User.email`/`User.username` ahora son ambos opcionales y únicos, un solo campo "Email o usuario" en `/login` prueba contra los dos. Las cuentas de secretaria/encargado ya existentes se migraron a username (ver `git log` de esa fecha si hace falta el detalle).
+- Login (18/09/2026): paciente se identifica con **email**; secretaria, encargado, admin y especialista lo hacen con **username** (sin email) — `User.email`/`User.username` ahora son ambos opcionales y únicos, un solo campo "Email o usuario" en `/login` prueba contra los dos. Las cuentas de secretaria/encargado ya existentes se migraron a username.
+  - El especialista ya no elige su acceso: al crear la ficha del profesional (admin o encargado) se le genera automático — usuario = apellido, contraseña = apellido en minúscula + "1234" (si el apellido ya está en uso, se le suma un número). El formulario de alta ahora pide Nombre y Apellido por separado (antes "Nombre completo") para poder armar ese usuario. El profesional sigue viendo sólo su propia sala de espera/grilla al entrar. Para profesionales viejos sin cuenta, "Acceso al portal" en su ficha sigue permitiendo cargar un usuario/contraseña a mano.
+  - Contraseñas con botón para mostrar/ocultar (`components/PasswordInput.tsx`) en todos los formularios de login/alta de cuenta.
 - Roles: PATIENT, ADMIN, SPECIALIST, SECRETARY, MANAGER — permisos (17/09/2026):
   - **Admin**: todo, todas las instituciones (crea instituciones, asigna roles).
   - **Encargado (MANAGER)**: espejo del Admin acotado a su institución — crea/edita profesionales, especialidades (agregar; borrar sigue siendo admin-only por ser lista global), horarios, días adicionales, licencias, personal.

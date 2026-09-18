@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { registerPatient } from "@/actions/auth";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function RegistroPage() {
   const [state, formAction, pending] = useActionState(
@@ -76,13 +77,12 @@ export default function RegistroPage() {
           <label htmlFor="password" className="text-sm font-medium">
             Contraseña
           </label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             required
             minLength={6}
-            className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
           />
         </div>
 

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireManager } from "@/lib/auth-helpers";
 import { professionalInInstitution } from "@/lib/institution-scope";
-import { createSecretaryUser } from "@/lib/staff";
+import { createSecretaryUser, isValidUsername } from "@/lib/staff";
 import { createPatientUser } from "@/lib/patients";
 import { saveUploadedDocument } from "@/lib/documents";
 import {
@@ -22,6 +22,7 @@ import {
   updateMessagesForProfessional,
   updatePaymentSettingsForProfessional,
   parseProfessionalIdentityInput,
+  generateProfessionalCredentials,
 } from "@/lib/professional-mutations";
 
 async function assertOwnProfessional(
@@ -35,12 +36,14 @@ async function assertOwnProfessional(
 
 export async function createProfessional(formData: FormData) {
   const { institutionId } = await requireManager();
-  const fullName = String(formData.get("fullName") ?? "").trim();
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const identity = parseProfessionalIdentityInput(formData);
   const specialtyId = String(formData.get("specialtyId") ?? "").trim();
 
-  if (!fullName) {
+  if (!firstName || !lastName) {
     redirect("/encargado/profesionales?error=nombre");
   }
 
@@ -55,19 +58,32 @@ export async function createProfessional(formData: FormData) {
     redirect("/encargado/profesionales?error=horario");
   }
 
-  const professional = await prisma.professional.create({
-    data: {
-      fullName,
-      bio: bio || null,
-      institution: institutionId ? { connect: { id: institutionId } } : undefined,
-      ...identity,
-      ...(specialtyId ? { specialties: { create: { specialtyId } } } : {}),
-      ...(hasSchedule ? { schedules: { create: scheduleInput } } : {}),
-    },
+  // El profesional entra sin email: usuario = apellido, contraseña =
+  // apellido en minúscula + "1234" (ver generateProfessionalCredentials).
+  const { username, rawPassword, passwordHash } =
+    await generateProfessionalCredentials(lastName);
+
+  const professional = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: { name: fullName, username, passwordHash, role: "SPECIALIST" },
+    });
+    return tx.professional.create({
+      data: {
+        fullName,
+        bio: bio || null,
+        institution: institutionId ? { connect: { id: institutionId } } : undefined,
+        user: { connect: { id: user.id } },
+        ...identity,
+        ...(specialtyId ? { specialties: { create: { specialtyId } } } : {}),
+        ...(hasSchedule ? { schedules: { create: scheduleInput } } : {}),
+      },
+    });
   });
 
   revalidatePath("/encargado/profesionales");
-  redirect(`/encargado/profesionales/${professional.id}?creado=1`);
+  redirect(
+    `/encargado/profesionales/${professional.id}?creado=1&usuario=${encodeURIComponent(username)}&clave=${encodeURIComponent(rawPassword)}`
+  );
 }
 
 export async function updateProfessional(formData: FormData) {
@@ -291,12 +307,12 @@ export async function grantPortalAccess(formData: FormData) {
   const professionalId = String(formData.get("professionalId") ?? "");
   await assertOwnProfessional(professionalId, institutionId);
 
-  const email = String(formData.get("email") ?? "")
+  const username = String(formData.get("username") ?? "")
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !email.includes("@") || !password || password.length < 6) {
+  if (!isValidUsername(username) || !password || password.length < 6) {
     redirect(`/encargado/profesionales/${professionalId}?error=acceso`);
   }
 
@@ -307,9 +323,9 @@ export async function grantPortalAccess(formData: FormData) {
     redirect(`/encargado/profesionales/${professionalId}?error=acceso`);
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
-    redirect(`/encargado/profesionales/${professionalId}?error=emailexistente`);
+    redirect(`/encargado/profesionales/${professionalId}?error=usuarioexistente`);
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -319,7 +335,7 @@ export async function grantPortalAccess(formData: FormData) {
     const user = await tx.user.create({
       data: {
         name: fullName,
-        email,
+        username,
         passwordHash,
         role: "SPECIALIST",
       },

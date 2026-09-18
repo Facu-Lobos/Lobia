@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createProfessional } from "@/actions/admin-professionals";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  nombre: "Ingresá el nombre del profesional.",
+  nombre: "Ingresá nombre y apellido del profesional.",
   horario: "Revisá el horario: la hora de inicio debe ser anterior a la de fin.",
 };
 
@@ -44,17 +44,34 @@ export default async function AdminProfesionalesPage({
         action={createProfessional}
         className="mt-6 flex max-w-lg flex-col gap-3 rounded-lg border border-border bg-surface p-4"
       >
-        <div>
-          <label htmlFor="fullName" className="text-sm font-medium">
-            Nombre completo
-          </label>
-          <input
-            id="fullName"
-            name="fullName"
-            required
-            className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="firstName" className="text-sm font-medium">
+              Nombre
+            </label>
+            <input
+              id="firstName"
+              name="firstName"
+              required
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="lastName" className="text-sm font-medium">
+              Apellido
+            </label>
+            <input
+              id="lastName"
+              name="lastName"
+              required
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
         </div>
+        <p className="text-xs text-muted">
+          Se le crea acceso automático a su portal: usuario = apellido,
+          contraseña = apellido en minúscula + &quot;1234&quot;.
+        </p>
         <div>
           <label htmlFor="bio" className="text-sm font-medium">
             Bio (opcional)

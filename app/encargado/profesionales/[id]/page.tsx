@@ -15,6 +15,7 @@ import {
   updatePaymentSettings,
   grantPortalAccess,
 } from "@/actions/manager";
+import { PasswordInput } from "@/components/PasswordInput";
 
 function formatDateInputValue(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
@@ -48,11 +49,13 @@ export default async function EncargadoProfesionalDetailPage({
     creado?: string;
     actualizado?: string;
     accesoCreado?: string;
+    usuario?: string;
+    clave?: string;
   }>;
 }) {
   const { institutionId } = await requireManager();
   const { id } = await params;
-  const { error, creado, actualizado, accesoCreado } = await searchParams;
+  const { error, creado, actualizado, accesoCreado, usuario, clave } = await searchParams;
 
   const [professional, allSpecialties] = await Promise.all([
     prisma.professional.findUnique({
@@ -103,15 +106,22 @@ export default async function EncargadoProfesionalDetailPage({
       )}
       {error === "acceso" && (
         <p className="mt-4 rounded-md bg-danger-bg px-4 py-3 text-sm text-danger">
-          Revisá el email y la contraseña (mínimo 6 caracteres).
+          Revisá el usuario y la contraseña (mínimo 6 caracteres).
         </p>
       )}
-      {error === "emailexistente" && (
+      {error === "usuarioexistente" && (
         <p className="mt-4 rounded-md bg-danger-bg px-4 py-3 text-sm text-danger">
-          Ya existe una cuenta con ese email.
+          Ya existe una cuenta con ese usuario.
         </p>
       )}
-      {(creado || actualizado || accesoCreado) && (
+      {creado && usuario && clave && (
+        <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
+          Profesional creado. Acceso a su portal: usuario{" "}
+          <span className="font-medium">{usuario}</span>, contraseña{" "}
+          <span className="font-medium">{clave}</span>.
+        </p>
+      )}
+      {(actualizado || accesoCreado) && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
           Guardado correctamente.
         </p>
@@ -693,16 +703,17 @@ export default async function EncargadoProfesionalDetailPage({
         <h2 className="font-medium">Acceso al portal</h2>
         {professional.user ? (
           <p className="mt-3 text-sm text-muted">
-            Este profesional ya tiene acceso a su portal con el email{" "}
+            Este profesional ya tiene acceso a su portal con el usuario{" "}
             <span className="font-medium text-foreground">
-              {professional.user.email}
+              @{professional.user.username}
             </span>
             .
           </p>
         ) : (
           <>
             <p className="mt-1 text-sm text-muted">
-              Creá un login para que este profesional gestione su propia
+              Este profesional se creó antes de que el acceso se generara
+              automáticamente. Creá un login para que gestione su propia
               agenda en /profesional.
             </p>
             <form
@@ -715,14 +726,17 @@ export default async function EncargadoProfesionalDetailPage({
                 value={professional.id}
               />
               <div>
-                <label htmlFor="accessEmail" className="text-sm font-medium">
-                  Email
+                <label htmlFor="accessUsername" className="text-sm font-medium">
+                  Usuario
                 </label>
                 <input
-                  id="accessEmail"
-                  name="email"
-                  type="email"
+                  id="accessUsername"
+                  name="username"
                   required
+                  minLength={3}
+                  maxLength={40}
+                  pattern="[a-z0-9._-]+"
+                  title="Letras minúsculas, números, puntos, guiones o guiones bajos."
                   className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
                 />
               </div>
@@ -733,10 +747,9 @@ export default async function EncargadoProfesionalDetailPage({
                 >
                   Contraseña
                 </label>
-                <input
+                <PasswordInput
                   id="accessPassword"
                   name="password"
-                  type="password"
                   required
                   minLength={6}
                   className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
