@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { requireManager } from "@/lib/auth-helpers";
 import { professionalInInstitution } from "@/lib/institution-scope";
 import { createSecretaryUser } from "@/lib/staff";
+import { createPatientUser } from "@/lib/patients";
+import { saveUploadedDocument } from "@/lib/documents";
 import {
   isValidScheduleSlotInput,
   upsertScheduleSlotForProfessional,
@@ -330,6 +332,51 @@ export async function grantPortalAccess(formData: FormData) {
 
   revalidatePath(`/encargado/profesionales/${professionalId}`);
   redirect(`/encargado/profesionales/${professionalId}?accesoCreado=1`);
+}
+
+export async function createPatient(formData: FormData) {
+  await requireManager();
+
+  const result = await createPatientUser({
+    name: String(formData.get("name") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    password: String(formData.get("password") ?? ""),
+  });
+
+  if (!result.ok) {
+    redirect(`/encargado/pacientes?error=${encodeURIComponent(result.error)}`);
+  }
+
+  revalidatePath("/encargado/pacientes");
+  redirect("/encargado/pacientes?creado=1");
+}
+
+export async function uploadPatientDocument(formData: FormData) {
+  const { user } = await requireManager();
+  const patientId = String(formData.get("patientId") ?? "");
+  const title = String(formData.get("title") ?? "");
+  const file = formData.get("file");
+  const detailPath = `/encargado/pacientes/${patientId}`;
+
+  if (!(file instanceof File)) {
+    redirect(`${detailPath}?error=Seleccion%C3%A1%20un%20archivo.`);
+  }
+
+  const result = await saveUploadedDocument({
+    patientId,
+    uploadedById: user.id,
+    title,
+    file: file as File,
+  });
+
+  if (!result.ok) {
+    redirect(`${detailPath}?error=${encodeURIComponent(result.error)}`);
+  }
+
+  revalidatePath(detailPath);
+  revalidatePath("/mis-turnos");
+  redirect(`${detailPath}?subido=1`);
 }
 
 export async function createSecretaryForInstitution(formData: FormData) {

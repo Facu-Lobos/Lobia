@@ -10,6 +10,7 @@ export async function updateOwnProfile(formData: FormData) {
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const name = `${firstName} ${lastName}`.trim();
+  const dni = String(formData.get("dni") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const healthInsurance = String(formData.get("healthInsurance") ?? "").trim();
   const healthInsuranceNumber = String(
@@ -19,11 +20,15 @@ export async function updateOwnProfile(formData: FormData) {
   if (!firstName || !lastName) {
     redirect("/mis-turnos/perfil?error=nombre");
   }
+  if (!dni) {
+    redirect("/mis-turnos/perfil?error=dni");
+  }
 
   await prisma.user.update({
     where: { id: user.id },
     data: {
       name,
+      dni,
       phone: phone || null,
       healthInsurance: healthInsurance || null,
       healthInsuranceNumber: healthInsuranceNumber || null,

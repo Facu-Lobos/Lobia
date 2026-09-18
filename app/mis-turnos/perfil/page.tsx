@@ -6,6 +6,7 @@ import { listAllHealthInsuranceNames } from "@/lib/health-insurance";
 
 const ERROR_MESSAGES: Record<string, string> = {
   nombre: "Completá nombre y apellido.",
+  dni: "Ingresá tu número de DNI.",
 };
 
 // El nombre se guarda como un único campo ("name"); acá se separa en
@@ -90,6 +91,18 @@ export default async function MiPerfilPage({
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
           </div>
+        </div>
+        <div>
+          <label htmlFor="dni" className="text-sm font-medium">
+            DNI
+          </label>
+          <input
+            id="dni"
+            name="dni"
+            required
+            defaultValue={user.dni ?? ""}
+            className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          />
         </div>
         <div>
           <label htmlFor="phone" className="text-sm font-medium">

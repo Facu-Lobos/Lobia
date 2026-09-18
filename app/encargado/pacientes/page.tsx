@@ -1,11 +1,13 @@
+import { requireManager } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { createPatient } from "@/actions/secretary";
+import { createPatient } from "@/actions/manager";
 
-export default async function SecretariaPacientesPage({
+export default async function EncargadoPacientesPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; error?: string; creado?: string }>;
 }) {
+  await requireManager();
   const { q, error, creado } = await searchParams;
 
   const patients = q
@@ -65,20 +67,12 @@ export default async function SecretariaPacientesPage({
                   {p.phone ? ` · ${p.phone}` : ""}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <a
-                  href={`/secretaria/pacientes/${p.id}`}
-                  className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
-                >
-                  Ficha
-                </a>
-                <a
-                  href={`/secretaria/asignar-turno?patientId=${p.id}`}
-                  className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
-                >
-                  Asignar turno
-                </a>
-              </div>
+              <a
+                href={`/encargado/pacientes/${p.id}`}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:border-primary"
+              >
+                Ficha
+              </a>
             </div>
           ))}
           {q && patients.length === 0 && (

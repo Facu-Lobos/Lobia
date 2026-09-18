@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { requireSecretary } from "@/lib/auth-helpers";
+import { requireManager } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { listDocumentsForPatient } from "@/lib/documents";
-import { uploadPatientDocument } from "@/actions/secretary";
+import { uploadPatientDocument } from "@/actions/manager";
 
 function formatDate(date: Date) {
   return `${String(date.getDate()).padStart(2, "0")}/${String(
@@ -10,14 +10,14 @@ function formatDate(date: Date) {
   ).padStart(2, "0")}/${date.getFullYear()}`;
 }
 
-export default async function SecretariaPacienteDetailPage({
+export default async function EncargadoPacienteDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ subido?: string; error?: string }>;
 }) {
-  await requireSecretary();
+  await requireManager();
   const { id } = await params;
   const { subido, error } = await searchParams;
 

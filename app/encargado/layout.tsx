@@ -13,6 +13,7 @@ export default async function EncargadoLayout({
       <nav className="mb-8 flex gap-1 border-b border-border pb-0 text-sm">
         {[
           { href: "/encargado", label: "Inicio" },
+          { href: "/encargado/pacientes", label: "Pacientes" },
           { href: "/encargado/profesionales", label: "Profesionales" },
           { href: "/encargado/especialidades", label: "Especialidades" },
           { href: "/encargado/turnos", label: "Turnos" },

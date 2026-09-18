@@ -67,6 +67,7 @@ model User {
   // Sólo tiene sentido para pacientes; se completan desde "Mi perfil".
   healthInsurance       String?
   healthInsuranceNumber String?
+  dni                   String?
 
   // Solo tiene sentido para MANAGER y SECRETARY (a qué institución pertenecen).
   institutionId String?
