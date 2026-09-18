@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lobia — Tecnología inteligente para la salud",
+  title: "Lobia — Tecnología inteligente para tu salud",
   description: "Sacá turnos con profesionales de la salud online",
 };
 

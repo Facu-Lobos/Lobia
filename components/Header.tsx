@@ -24,7 +24,7 @@ export default async function Header() {
           <span className="leading-tight">
             <LobiaWordmark className="text-lg" strokeWidth={1.3} />
             <span className="hidden text-xs text-white/60 sm:block">
-              Tecnología inteligente para la salud.
+              Tecnología inteligente para tu salud.
             </span>
           </span>
         </Link>
