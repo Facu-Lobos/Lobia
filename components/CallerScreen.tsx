@@ -28,14 +28,16 @@ export function CallerScreen({ patients }: { patients: CalledPatient[] }) {
   return (
     <div>
       <div className="rounded-lg border-2 border-primary bg-primary-soft p-8 text-center">
-        <p className="text-lg text-muted">Por favor, acérquese</p>
-        <p className="mt-2 text-5xl font-bold text-foreground">
+        <p className="text-5xl font-bold text-foreground">
           {current.patientName}
         </p>
-        <p className="mt-4 text-3xl font-semibold text-primary">
-          {current.consultingRoom ?? "Consultorio no asignado"}
+        <p className="mt-4 text-2xl text-muted">
+          Acérquese al consultorio{" "}
+          <span className="font-semibold text-primary">
+            {current.consultingRoom ?? "—"}
+          </span>{" "}
+          con {current.professionalName}
         </p>
-        <p className="mt-2 text-xl text-muted">{current.professionalName}</p>
       </div>
 
       {rest.length > 0 && (

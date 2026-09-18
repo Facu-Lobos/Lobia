@@ -21,7 +21,8 @@ function formatTime(date: Date) {
 // la sala de espera física: header con el logo real, columna de turnos a
 // la izquierda (letra grande — si llaman a dos pacientes seguido tiene que
 // alcanzar a leerse antes de que se corra de la lista) y la tarjeta grande
-// de "Por favor, acérquese" ocupando el resto del ancho.
+// con el paciente que está pasando a la consulta, ocupando el resto del
+// ancho.
 export function PublicLlamadorScreen({
   appointments,
 }: {
@@ -77,15 +78,15 @@ export function PublicLlamadorScreen({
         <main className="flex flex-1 items-center justify-center p-10">
           {current ? (
             <div className="w-full max-w-4xl rounded-lg border-4 border-primary bg-primary-soft p-16 text-center">
-              <p className="text-3xl text-muted">Por favor, acérquese</p>
-              <p className="mt-4 text-8xl font-bold text-foreground">
+              <p className="text-7xl font-bold text-foreground">
                 {current.patientName}
               </p>
-              <p className="mt-8 text-6xl font-semibold text-primary">
-                {current.consultingRoom ?? "Consultorio no asignado"}
-              </p>
-              <p className="mt-4 text-3xl text-muted">
-                {current.professionalName}
+              <p className="mt-8 text-4xl text-muted">
+                Acérquese al consultorio{" "}
+                <span className="font-semibold text-primary">
+                  {current.consultingRoom ?? "—"}
+                </span>{" "}
+                con {current.professionalName}
               </p>
             </div>
           ) : (
