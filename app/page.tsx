@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 import LobiaWordmark from "@/components/LobiaWordmark";
 
 export default async function Home() {
-  const specialties = await prisma.specialty.findMany({
+  const institutions = await prisma.institution.findMany({
+    where: { active: true },
     orderBy: { name: "asc" },
-    take: 8,
   });
 
   return (
@@ -18,8 +18,8 @@ export default async function Home() {
               Sacá tu turno médico online
             </h1>
             <p className="mt-4 text-lg text-white/75">
-              Elegí un profesional por especialidad y reservá tu turno al
-              instante, sin llamadas ni esperas.
+              Elegí tu institución y reservá tu turno al instante, sin
+              llamadas ni esperas.
             </p>
             <Link
               href="/profesionales"
@@ -31,19 +31,19 @@ export default async function Home() {
         </div>
       </div>
 
-      {specialties.length > 0 && (
+      {institutions.length > 0 && (
         <div className="mx-auto max-w-5xl px-4 py-12">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
-            Especialidades
+            Instituciones
           </h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {specialties.map((s) => (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {institutions.map((inst) => (
               <Link
-                key={s.id}
-                href={`/profesionales?especialidad=${s.id}`}
-                className="rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-foreground hover:border-primary hover:text-primary"
+                key={inst.id}
+                href={`/profesionales?institucion=${inst.id}`}
+                className="rounded-lg border border-border bg-surface p-5 transition-colors hover:border-primary"
               >
-                {s.name}
+                <h3 className="font-medium">{inst.name}</h3>
               </Link>
             ))}
           </div>

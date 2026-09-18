@@ -2,11 +2,11 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional } from "@/lib/availability";
 import { markArrived, markCalled, markCompleted } from "@/actions/appointment-management";
-import { WaitingRoom } from "@/components/WaitingRoom";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { DatePicker } from "@/components/DatePicker";
 import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
+import { MultiProfessionalGrid } from "@/components/MultiProfessionalGrid";
 import { dayParam, parseDayParam, parseMonthParam } from "@/components/AppointmentCalendar";
 
 const DAY_NAMES = [
@@ -29,8 +29,6 @@ export default async function AdminSalaEsperaPage({
 
   const day = parseDayParam(dateParamValue);
   const month = monthParamValue ? parseMonthParam(monthParamValue) : new Date(day.getFullYear(), day.getMonth(), 1);
-  const dayEnd = new Date(day);
-  dayEnd.setDate(dayEnd.getDate() + 1);
 
   const qs = profesionalId ? `&profesionalId=${profesionalId}` : "";
   const basePath = "/admin/sala-espera";
@@ -44,7 +42,7 @@ export default async function AdminSalaEsperaPage({
     ? professionals.find((p) => p.id === profesionalId)
     : null;
 
-  const [daySlots, weekSchedules, allApptsForDay] = await Promise.all([
+  const [daySlots, weekSchedules, allProfessionalsData] = await Promise.all([
     selectedProfessional
       ? getDaySlotsForProfessional(selectedProfessional.id, day)
       : Promise.resolve(null),
@@ -52,14 +50,13 @@ export default async function AdminSalaEsperaPage({
       ? prisma.scheduleSlot.findMany({ where: { professionalId: selectedProfessional.id } })
       : Promise.resolve([]),
     !selectedProfessional
-      ? prisma.appointment.findMany({
-          where: {
-            status: "BOOKED",
-            date: { gte: day, lt: dayEnd },
-          },
-          include: { professional: true, patient: true },
-          orderBy: { date: "asc" },
-        })
+      ? Promise.all(
+          professionals.map(async (p) => ({
+            professional: { id: p.id, fullName: p.fullName },
+            slots: await getDaySlotsForProfessional(p.id, day),
+            schedules: await prisma.scheduleSlot.findMany({ where: { professionalId: p.id } }),
+          }))
+        )
       : Promise.resolve(null),
   ]);
 
@@ -128,16 +125,8 @@ export default async function AdminSalaEsperaPage({
             markCompletedAction={markCompleted}
           />
         ) : (
-          <WaitingRoom
-            appointments={allApptsForDay!.map((a) => ({
-              id: a.id,
-              date: a.date,
-              patientName: a.patient.name,
-              professionalName: a.professional.fullName,
-              arrivedAt: a.arrivedAt,
-              calledAt: a.calledAt,
-              completedAt: a.completedAt,
-            }))}
+          <MultiProfessionalGrid
+            data={allProfessionalsData!}
             returnTo={returnTo}
             markArrivedAction={markArrived}
             markCalledAction={markCalled}

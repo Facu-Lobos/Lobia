@@ -71,6 +71,13 @@ export function DatePicker({
         </Link>
       </div>
 
+      <Link
+        href={`${basePath}?date=${dayParamValue(today)}&month=${monthParam(today)}${extraQuery}`}
+        className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
+      >
+        Hoy
+      </Link>
+
       <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-xs">
         {WEEKDAY_LABELS.map((w) => (
           <div key={w} className="py-1 font-medium text-muted">
