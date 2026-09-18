@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { parseDateOnlyLocal } from "@/lib/dates";
 
 export async function updateOwnProfile(formData: FormData) {
   const user = await requireUser();
@@ -11,6 +12,7 @@ export async function updateOwnProfile(formData: FormData) {
   const lastName = String(formData.get("lastName") ?? "").trim();
   const name = `${firstName} ${lastName}`.trim();
   const dni = String(formData.get("dni") ?? "").trim();
+  const birthDateRaw = String(formData.get("birthDate") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const healthInsurance = String(formData.get("healthInsurance") ?? "").trim();
   const healthInsuranceNumber = String(
@@ -29,6 +31,7 @@ export async function updateOwnProfile(formData: FormData) {
     data: {
       name,
       dni,
+      birthDate: birthDateRaw ? parseDateOnlyLocal(birthDateRaw) : null,
       phone: phone || null,
       healthInsurance: healthInsurance || null,
       healthInsuranceNumber: healthInsuranceNumber || null,

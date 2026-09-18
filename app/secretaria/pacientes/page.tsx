@@ -1,28 +1,37 @@
 import { prisma } from "@/lib/prisma";
 import { createPatient } from "@/actions/secretary";
-import { PasswordInput } from "@/components/PasswordInput";
+import { listAllHealthInsuranceNames } from "@/lib/health-insurance";
 
 export default async function SecretariaPacientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; error?: string; creado?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    error?: string;
+    creado?: string;
+    usuario?: string;
+    clave?: string;
+  }>;
 }) {
-  const { q, error, creado } = await searchParams;
+  const { q, error, creado, usuario, clave } = await searchParams;
 
-  const patients = q
-    ? await prisma.user.findMany({
-        where: {
-          role: "PATIENT",
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
-            { dni: { contains: q } },
-          ],
-        },
-        orderBy: { name: "asc" },
-        take: 20,
-      })
-    : [];
+  const [patients, healthInsuranceOptions] = await Promise.all([
+    q
+      ? prisma.user.findMany({
+          where: {
+            role: "PATIENT",
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+              { dni: { contains: q } },
+            ],
+          },
+          orderBy: { name: "asc" },
+          take: 20,
+        })
+      : Promise.resolve([]),
+    listAllHealthInsuranceNames(),
+  ]);
 
   return (
     <div>
@@ -33,9 +42,11 @@ export default async function SecretariaPacientesPage({
           {decodeURIComponent(error)}
         </p>
       )}
-      {creado && (
+      {creado && usuario && clave && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
-          Paciente creado.
+          Paciente creado. Acceso: usuario{" "}
+          <span className="font-medium">{usuario}</span>, contraseña{" "}
+          <span className="font-medium">{clave}</span>.
         </p>
       )}
 
@@ -92,18 +103,47 @@ export default async function SecretariaPacientesPage({
 
       <section className="mt-10">
         <h2 className="font-medium">Nuevo paciente</h2>
+        <p className="mt-1 text-sm text-muted">
+          Entra con su DNI como usuario; la contraseña son los últimos 3
+          números de ese DNI.
+        </p>
         <form
           action={createPatient}
           className="mt-3 flex max-w-lg flex-col gap-3 rounded-lg border border-border bg-surface p-4"
         >
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="firstName" className="text-sm font-medium">
+                Nombre
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                required
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="lastName" className="text-sm font-medium">
+                Apellido
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                required
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+          </div>
           <div>
-            <label htmlFor="name" className="text-sm font-medium">
-              Nombre completo
+            <label htmlFor="dni" className="text-sm font-medium">
+              DNI
             </label>
             <input
-              id="name"
-              name="name"
+              id="dni"
+              name="dni"
               required
+              placeholder="Sin puntos"
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
           </div>
@@ -120,6 +160,17 @@ export default async function SecretariaPacientesPage({
             />
           </div>
           <div>
+            <label htmlFor="birthDate" className="text-sm font-medium">
+              Fecha de nacimiento (opcional)
+            </label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
             <label htmlFor="phone" className="text-sm font-medium">
               Teléfono (opcional)
             </label>
@@ -130,19 +181,35 @@ export default async function SecretariaPacientesPage({
             />
           </div>
           <div>
-            <label htmlFor="password" className="text-sm font-medium">
-              Contraseña
+            <label htmlFor="healthInsurance" className="text-sm font-medium">
+              Obra social (opcional)
             </label>
-            <PasswordInput
-              id="password"
-              name="password"
-              required
-              minLength={6}
+            <select
+              id="healthInsurance"
+              name="healthInsurance"
+              defaultValue=""
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            >
+              <option value="">Particular (sin obra social)</option>
+              {healthInsuranceOptions.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="healthInsuranceNumber"
+              className="text-sm font-medium"
+            >
+              Número de afiliado (opcional)
+            </label>
+            <input
+              id="healthInsuranceNumber"
+              name="healthInsuranceNumber"
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
-            <p className="mt-1 text-xs text-muted">
-              El paciente puede usarla más adelante para entrar por su cuenta.
-            </p>
           </div>
           <button
             type="submit"

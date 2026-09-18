@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { registerPatient } from "@/actions/auth";
-import { PasswordInput } from "@/components/PasswordInput";
 
 export default function RegistroPage() {
   const [state, formAction, pending] = useActionState(
@@ -17,8 +16,15 @@ export default function RegistroPage() {
         <h1 className="mb-4 text-2xl font-semibold tracking-tight">
           ¡Cuenta creada!
         </h1>
-        <p className="mb-6 text-muted">
-          Tu cuenta se registró correctamente. Ya podés iniciar sesión.
+        <p className="mb-2 text-muted">
+          Tu cuenta se registró correctamente. Para entrar usá tu DNI como
+          usuario y estos datos:
+        </p>
+        <p className="mb-6 rounded-md border border-border bg-surface px-4 py-3 text-sm">
+          Usuario: <span className="font-medium">{state.username}</span>
+          <br />
+          Contraseña: <span className="font-medium">{state.rawPassword}</span>{" "}
+          (los últimos 3 números de tu DNI)
         </p>
         <Link
           href="/login"
@@ -37,16 +43,46 @@ export default function RegistroPage() {
       </h1>
 
       <form action={formAction} className="flex flex-col gap-4">
+        <div className="flex gap-3">
+          <div className="flex flex-1 flex-col gap-1">
+            <label htmlFor="firstName" className="text-sm font-medium">
+              Nombre
+            </label>
+            <input
+              id="firstName"
+              name="firstName"
+              required
+              className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <label htmlFor="lastName" className="text-sm font-medium">
+              Apellido
+            </label>
+            <input
+              id="lastName"
+              name="lastName"
+              required
+              className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-medium">
-            Nombre completo
+          <label htmlFor="dni" className="text-sm font-medium">
+            DNI
           </label>
           <input
-            id="name"
-            name="name"
+            id="dni"
+            name="dni"
             required
+            placeholder="Sin puntos"
             className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
           />
+          <p className="text-xs text-muted">
+            Es tu usuario para entrar. La contraseña van a ser los últimos 3
+            números.
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -58,6 +94,21 @@ export default function RegistroPage() {
             name="email"
             type="email"
             required
+            className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          />
+          <p className="text-xs text-muted">
+            Para mandarte la confirmación de tus turnos.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="birthDate" className="text-sm font-medium">
+            Fecha de nacimiento (opcional)
+          </label>
+          <input
+            id="birthDate"
+            name="birthDate"
+            type="date"
             className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
           />
         </div>
@@ -74,15 +125,28 @@ export default function RegistroPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium">
-            Contraseña
+          <label htmlFor="healthInsurance" className="text-sm font-medium">
+            Obra social (opcional)
           </label>
-          <PasswordInput
-            id="password"
-            name="password"
-            required
-            minLength={6}
-            className="w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          <input
+            id="healthInsurance"
+            name="healthInsurance"
+            placeholder="Particular si no tenés"
+            className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="healthInsuranceNumber"
+            className="text-sm font-medium"
+          >
+            Número de afiliado (opcional)
+          </label>
+          <input
+            id="healthInsuranceNumber"
+            name="healthInsuranceNumber"
+            className="rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
           />
         </div>
 

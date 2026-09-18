@@ -9,6 +9,7 @@ import { professionalInInstitution } from "@/lib/institution-scope";
 import { createSecretaryUser, isValidUsername } from "@/lib/staff";
 import { createPatientUser } from "@/lib/patients";
 import { saveUploadedDocument } from "@/lib/documents";
+import { parseDateOnlyLocal } from "@/lib/dates";
 import {
   isValidScheduleSlotInput,
   upsertScheduleSlotForProfessional,
@@ -353,11 +354,17 @@ export async function grantPortalAccess(formData: FormData) {
 export async function createPatient(formData: FormData) {
   await requireManager();
 
+  const birthDateRaw = String(formData.get("birthDate") ?? "").trim();
+
   const result = await createPatientUser({
-    name: String(formData.get("name") ?? ""),
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
     email: String(formData.get("email") ?? ""),
+    dni: String(formData.get("dni") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    password: String(formData.get("password") ?? ""),
+    birthDate: birthDateRaw ? parseDateOnlyLocal(birthDateRaw) : null,
+    healthInsurance: String(formData.get("healthInsurance") ?? ""),
+    healthInsuranceNumber: String(formData.get("healthInsuranceNumber") ?? ""),
   });
 
   if (!result.ok) {
@@ -365,7 +372,9 @@ export async function createPatient(formData: FormData) {
   }
 
   revalidatePath("/encargado/pacientes");
-  redirect("/encargado/pacientes?creado=1");
+  redirect(
+    `/encargado/pacientes?creado=1&usuario=${encodeURIComponent(result.username)}&clave=${encodeURIComponent(result.rawPassword)}`
+  );
 }
 
 export async function uploadPatientDocument(formData: FormData) {

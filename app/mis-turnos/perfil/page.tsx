@@ -17,6 +17,12 @@ function splitName(fullName: string) {
   return { firstName: firstName ?? "", lastName: rest.join(" ") };
 }
 
+function formatDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+}
+
 export default async function MiPerfilPage({
   searchParams,
 }: {
@@ -101,6 +107,20 @@ export default async function MiPerfilPage({
             name="dni"
             required
             defaultValue={user.dni ?? ""}
+            className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label htmlFor="birthDate" className="text-sm font-medium">
+            Fecha de nacimiento
+          </label>
+          <input
+            id="birthDate"
+            name="birthDate"
+            type="date"
+            defaultValue={
+              user.birthDate ? formatDateInputValue(user.birthDate) : ""
+            }
             className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
           />
         </div>

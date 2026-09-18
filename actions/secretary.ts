@@ -7,15 +7,22 @@ import { createPatientUser } from "@/lib/patients";
 import { createBooking } from "@/lib/booking";
 import { professionalInInstitution } from "@/lib/institution-scope";
 import { saveUploadedDocument } from "@/lib/documents";
+import { parseDateOnlyLocal } from "@/lib/dates";
 
 export async function createPatient(formData: FormData) {
   await requireSecretary();
 
+  const birthDateRaw = String(formData.get("birthDate") ?? "").trim();
+
   const result = await createPatientUser({
-    name: String(formData.get("name") ?? ""),
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
     email: String(formData.get("email") ?? ""),
+    dni: String(formData.get("dni") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    password: String(formData.get("password") ?? ""),
+    birthDate: birthDateRaw ? parseDateOnlyLocal(birthDateRaw) : null,
+    healthInsurance: String(formData.get("healthInsurance") ?? ""),
+    healthInsuranceNumber: String(formData.get("healthInsuranceNumber") ?? ""),
   });
 
   if (!result.ok) {
@@ -25,7 +32,9 @@ export async function createPatient(formData: FormData) {
   }
 
   revalidatePath("/secretaria/pacientes");
-  redirect("/secretaria/pacientes?creado=1");
+  redirect(
+    `/secretaria/pacientes?creado=1&usuario=${encodeURIComponent(result.username)}&clave=${encodeURIComponent(result.rawPassword)}`
+  );
 }
 
 export async function assignAppointment(formData: FormData) {
