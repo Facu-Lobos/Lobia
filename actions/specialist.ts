@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { requireSpecialist } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { CONSULTORIO_COOKIE } from "@/lib/consultorio";
 import {
   isValidScheduleSlotInput,
   upsertScheduleSlotForProfessional,
@@ -21,6 +23,31 @@ import {
   upsertPatientAntecedents,
   upsertClinicalNoteForAppointment,
 } from "@/lib/clinical";
+import { saveUploadedDocument } from "@/lib/documents";
+
+export async function setOwnConsultingRoom(formData: FormData) {
+  const { professional } = await requireSpecialist();
+  const consultingRoom = String(formData.get("consultingRoom") ?? "").trim();
+
+  if (!consultingRoom) {
+    redirect("/profesional/consultorio?error=1");
+  }
+
+  await prisma.professional.update({
+    where: { id: professional.id },
+    data: { consultingRoom },
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(CONSULTORIO_COOKIE, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  revalidatePath("/profesional/llamador");
+  redirect("/profesional");
+}
 
 export async function upsertOwnScheduleSlot(formData: FormData) {
   const { professional } = await requireSpecialist();
@@ -257,4 +284,38 @@ export async function upsertClinicalNote(formData: FormData) {
   revalidatePath(historiaPath);
   revalidatePath("/mis-turnos/historia-clinica");
   redirect(`${historiaPath}?guardado=1`);
+}
+
+export async function uploadClinicalDocument(formData: FormData) {
+  const { professional, user } = await requireSpecialist();
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+  const historiaPath = `/profesional/turnos/${appointmentId}/historia-clinica`;
+  const title = String(formData.get("title") ?? "");
+  const file = formData.get("file");
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+  if (!appointment || appointment.professionalId !== professional.id) {
+    redirect("/profesional/turnos?error=noautorizado");
+  }
+
+  if (!(file instanceof File)) {
+    redirect(`${historiaPath}?error=Seleccion%C3%A1%20un%20archivo.`);
+  }
+
+  const result = await saveUploadedDocument({
+    patientId: appointment.patientId,
+    uploadedById: user.id,
+    title,
+    file: file as File,
+  });
+
+  if (!result.ok) {
+    redirect(`${historiaPath}?error=${encodeURIComponent(result.error)}`);
+  }
+
+  revalidatePath(historiaPath);
+  revalidatePath("/mis-turnos");
+  redirect(`${historiaPath}?subido=1`);
 }

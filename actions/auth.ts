@@ -1,9 +1,11 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { cookies } from "next/headers";
 import { signIn, signOut } from "@/auth";
 import { createPatientUser } from "@/lib/patients";
 import { parseDateOnlyLocal } from "@/lib/dates";
+import { CONSULTORIO_COOKIE } from "@/lib/consultorio";
 
 export type LoginState = { error: string } | undefined;
 
@@ -26,6 +28,8 @@ export async function login(
 }
 
 export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete(CONSULTORIO_COOKIE);
   await signOut({ redirectTo: "/" });
 }
 

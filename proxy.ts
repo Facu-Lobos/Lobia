@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { CONSULTORIO_COOKIE } from "@/lib/consultorio";
 
 export default auth((req) => {
   const { nextUrl } = req;
@@ -28,6 +29,12 @@ export default auth((req) => {
     }
     if (role !== "SPECIALIST") {
       return NextResponse.redirect(new URL("/", nextUrl));
+    }
+    // Apenas entra, se le pregunta en qué consultorio va a atender (para
+    // el llamador) antes de dejarlo pasar a cualquier otra pantalla.
+    const hasConsultingRoom = req.cookies.get(CONSULTORIO_COOKIE)?.value === "1";
+    if (!hasConsultingRoom && nextUrl.pathname !== "/profesional/consultorio") {
+      return NextResponse.redirect(new URL("/profesional/consultorio", nextUrl));
     }
   }
 

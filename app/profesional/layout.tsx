@@ -16,6 +16,8 @@ export default async function ProfesionalLayout({
           { href: "/profesional/agenda", label: "Agenda" },
           { href: "/profesional/turnos", label: "Turnos" },
           { href: "/profesional/sala-espera", label: "Sala de espera" },
+          { href: "/profesional/llamador", label: "Llamador" },
+          { href: "/profesional/consultorio", label: "Consultorio" },
           { href: "/profesional/mensajes", label: "Mensajes" },
           { href: "/profesional/pagos", label: "Pagos" },
           { href: "/profesional/liquidacion", label: "Liquidación" },

@@ -60,6 +60,11 @@ export default async function ProfesionalSalaEsperaPage({
           markArrivedAction={markOwnArrived}
           markCalledAction={markOwnCalled}
           markCompletedAction={markOwnCompleted}
+          getPatientHref={(slot) =>
+            slot.appointment
+              ? `/profesional/turnos/${slot.appointment.id}/historia-clinica`
+              : undefined
+          }
         />
       </div>
     </div>

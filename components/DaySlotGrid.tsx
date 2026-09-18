@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DaySlot } from "@/lib/availability";
 
 type QueueAction = (formData: FormData) => void | Promise<void>;
@@ -75,12 +76,17 @@ export function DaySlotGrid({
   markArrivedAction,
   markCalledAction,
   markCompletedAction,
+  getPatientHref,
 }: {
   slots: DaySlot[];
   returnTo: string;
   markArrivedAction?: QueueAction;
   markCalledAction: QueueAction;
   markCompletedAction: QueueAction;
+  // Sólo el profesional linkea el nombre del paciente a su historia
+  // clínica; el resto de los roles (secretaría, encargado, admin) lo
+  // muestran como texto plano.
+  getPatientHref?: (slot: DaySlot) => string | undefined;
 }) {
   if (slots.length === 0) {
     return (
@@ -103,32 +109,48 @@ export function DaySlotGrid({
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {slots.map((slot) => (
-            <tr
-              key={slot.iso}
-              className={slot.appointment ? "" : "text-muted/70"}
-            >
-              <td className="px-3 py-2 font-medium">{slot.time}</td>
-              <td className="px-3 py-2">
-                {slot.appointment?.patientName ?? "—"}
-              </td>
-              <td className="px-3 py-2">
-                {slot.appointment?.healthInsurance ?? "—"}
-              </td>
-              <td className="px-3 py-2">
-                <StatusBadge slot={slot} />
-              </td>
-              <td className="px-3 py-2">
-                <ActionButton
-                  slot={slot}
-                  returnTo={returnTo}
-                  markArrivedAction={markArrivedAction}
-                  markCalledAction={markCalledAction}
-                  markCompletedAction={markCompletedAction}
-                />
-              </td>
-            </tr>
-          ))}
+          {slots.map((slot) => {
+            const href = slot.appointment ? getPatientHref?.(slot) : undefined;
+            return (
+              <tr
+                key={slot.iso}
+                className={slot.appointment ? "" : "text-muted/70"}
+              >
+                <td className="px-3 py-2 font-medium">{slot.time}</td>
+                <td className="px-3 py-2">
+                  {slot.appointment ? (
+                    href ? (
+                      <Link
+                        href={href}
+                        className="text-primary hover:underline"
+                      >
+                        {slot.appointment.patientName}
+                      </Link>
+                    ) : (
+                      slot.appointment.patientName
+                    )
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {slot.appointment?.healthInsurance ?? "—"}
+                </td>
+                <td className="px-3 py-2">
+                  <StatusBadge slot={slot} />
+                </td>
+                <td className="px-3 py-2">
+                  <ActionButton
+                    slot={slot}
+                    returnTo={returnTo}
+                    markArrivedAction={markArrivedAction}
+                    markCalledAction={markCalledAction}
+                    markCompletedAction={markCompletedAction}
+                  />
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
