@@ -60,7 +60,7 @@ export default async function MiPerfilPage({
         <div>
           <label className="text-sm font-medium">Email</label>
           <input
-            value={user.email}
+            value={user.email ?? ""}
             disabled
             className="mt-1 w-full rounded-md border border-border bg-surface/60 px-3 py-2 text-muted outline-none"
           />

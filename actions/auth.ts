@@ -12,13 +12,13 @@ export async function login(
 ): Promise<LoginState> {
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      identifier: formData.get("identifier"),
       password: formData.get("password"),
       redirectTo: "/",
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Email o contraseña incorrectos." };
+      return { error: "Usuario/email o contraseña incorrectos." };
     }
     throw error;
   }

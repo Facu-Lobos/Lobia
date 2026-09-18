@@ -22,6 +22,7 @@ export async function sendDueReminders() {
 
   let sent = 0;
   for (const appointment of dueAppointments) {
+    if (!appointment.patient.email) continue;
     await sendEmail({
       to: appointment.patient.email,
       subject: "Recordatorio de tu turno",

@@ -21,7 +21,7 @@ export function formatAppointmentDate(date: Date) {
 }
 
 type NotificationInput = {
-  patientEmail: string;
+  patientEmail: string | null;
   patientName: string;
   professionalName: string;
   date: Date;
@@ -43,6 +43,7 @@ export function sendBookingConfirmation({
   professionalName,
   date,
 }: NotificationInput) {
+  if (!patientEmail) return;
   return sendSafely({
     to: patientEmail,
     subject: "Turno confirmado",
@@ -58,6 +59,7 @@ export function sendCancellationNotice({
   professionalName,
   date,
 }: NotificationInput) {
+  if (!patientEmail) return;
   return sendSafely({
     to: patientEmail,
     subject: "Turno cancelado",

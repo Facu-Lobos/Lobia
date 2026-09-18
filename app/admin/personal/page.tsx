@@ -10,9 +10,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ERROR_MESSAGES: Record<string, string> = {
   nombre: "Ingresá el nombre.",
-  email: "Ingresá un email válido.",
+  usuario:
+    "El usuario debe tener entre 3 y 40 caracteres: letras, números, puntos, guiones o guiones bajos.",
   password: "La contraseña debe tener al menos 6 caracteres.",
-  emailexistente: "Ya existe una cuenta con ese email.",
+  usuarioexistente: "Ya existe una cuenta con ese usuario.",
   institucion: "Elegí una institución.",
 };
 
@@ -54,7 +55,9 @@ export default async function AdminPersonalPage({
             <div key={u.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="font-medium">{u.name}</p>
-                <p className="text-sm text-muted">{u.email}</p>
+                <p className="text-sm text-muted">
+                  {u.username ? `@${u.username}` : u.email}
+                </p>
               </div>
               <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
                 {ROLE_LABELS[u.role] ?? u.role}
@@ -88,14 +91,17 @@ export default async function AdminPersonalPage({
             />
           </div>
           <div>
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+            <label htmlFor="username" className="text-sm font-medium">
+              Usuario
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="username"
+              name="username"
               required
+              minLength={3}
+              maxLength={40}
+              pattern="[a-z0-9._-]+"
+              title="Letras minúsculas, números, puntos, guiones o guiones bajos."
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
           </div>
@@ -165,14 +171,17 @@ export default async function AdminPersonalPage({
               />
             </div>
             <div>
-              <label htmlFor="managerEmail" className="text-sm font-medium">
-                Email
+              <label htmlFor="managerUsername" className="text-sm font-medium">
+                Usuario
               </label>
               <input
-                id="managerEmail"
-                name="email"
-                type="email"
+                id="managerUsername"
+                name="username"
                 required
+                minLength={3}
+                maxLength={40}
+                pattern="[a-z0-9._-]+"
+                title="Letras minúsculas, números, puntos, guiones o guiones bajos."
                 className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
               />
             </div>

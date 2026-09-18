@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { createSecretaryUser } from "@/lib/staff";
+import { createSecretaryUser, isValidUsername } from "@/lib/staff";
 
 export async function createSecretary(formData: FormData) {
   await requireAdmin();
@@ -14,7 +14,7 @@ export async function createSecretary(formData: FormData) {
 
   const result = await createSecretaryUser({
     name: String(formData.get("name") ?? ""),
-    email: String(formData.get("email") ?? ""),
+    username: String(formData.get("username") ?? ""),
     password: String(formData.get("password") ?? ""),
     institutionId,
   });
@@ -31,7 +31,7 @@ export async function createManager(formData: FormData) {
   await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "")
+  const username = String(formData.get("username") ?? "")
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -40,8 +40,8 @@ export async function createManager(formData: FormData) {
   if (!name || name.length < 2) {
     redirect("/admin/personal?error=nombre");
   }
-  if (!email || !email.includes("@")) {
-    redirect("/admin/personal?error=email");
+  if (!isValidUsername(username)) {
+    redirect("/admin/personal?error=usuario");
   }
   if (!password || password.length < 6) {
     redirect("/admin/personal?error=password");
@@ -57,15 +57,15 @@ export async function createManager(formData: FormData) {
     redirect("/admin/personal?error=institucion");
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
-    redirect("/admin/personal?error=emailexistente");
+    redirect("/admin/personal?error=usuarioexistente");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.create({
-    data: { name, email, passwordHash, role: "MANAGER", institutionId },
+    data: { name, username, passwordHash, role: "MANAGER", institutionId },
   });
 
   revalidatePath("/admin/personal");

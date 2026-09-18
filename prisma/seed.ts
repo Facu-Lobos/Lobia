@@ -8,10 +8,10 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const adminPassword = await bcrypt.hash("admin1234", 10);
   await prisma.user.upsert({
-    where: { email: "admin@turnos.local" },
+    where: { username: "admin" },
     update: {},
     create: {
-      email: "admin@turnos.local",
+      username: "admin",
       passwordHash: adminPassword,
       name: "Administrador",
       role: "ADMIN",
@@ -195,10 +195,10 @@ async function main() {
 
   const secretaryPassword = await bcrypt.hash("secretaria1234", 10);
   const secretaryUser = await prisma.user.upsert({
-    where: { email: "secretaria@turnos.local" },
+    where: { username: "secretaria" },
     update: {},
     create: {
-      email: "secretaria@turnos.local",
+      username: "secretaria",
       passwordHash: secretaryPassword,
       name: "Secretaria",
       role: "SECRETARY",
@@ -214,10 +214,10 @@ async function main() {
 
   const managerPassword = await bcrypt.hash("encargado1234", 10);
   await prisma.user.upsert({
-    where: { email: "encargado@turnos.local" },
+    where: { username: "encargado" },
     update: {},
     create: {
-      email: "encargado@turnos.local",
+      username: "encargado",
       passwordHash: managerPassword,
       name: "Encargado Sede Centro",
       role: "MANAGER",
@@ -323,10 +323,10 @@ async function main() {
   }
 
   console.log("Seed completado.");
-  console.log("Admin: admin@turnos.local / admin1234");
-  console.log("Encargado (Sede Centro): encargado@turnos.local / encargado1234");
+  console.log("Admin: admin / admin1234");
+  console.log("Encargado (Sede Centro): encargado / encargado1234");
   console.log("Especialista: especialista@turnos.local / especialista1234");
-  console.log("Secretaria: secretaria@turnos.local / secretaria1234");
+  console.log("Secretaria: secretaria / secretaria1234");
   console.log("Paciente: paciente@turnos.local / paciente1234");
 }
 

@@ -337,7 +337,7 @@ export async function createSecretaryForInstitution(formData: FormData) {
 
   const result = await createSecretaryUser({
     name: String(formData.get("name") ?? ""),
-    email: String(formData.get("email") ?? ""),
+    username: String(formData.get("username") ?? ""),
     password: String(formData.get("password") ?? ""),
     institutionId,
   });
