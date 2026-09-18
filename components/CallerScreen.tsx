@@ -1,3 +1,5 @@
+import { stripProfessionalTitle } from "@/lib/format";
+
 export type CalledPatient = {
   id: string;
   patientName: string;
@@ -36,7 +38,7 @@ export function CallerScreen({ patients }: { patients: CalledPatient[] }) {
           <span className="font-semibold text-primary">
             {current.consultingRoom ?? "—"}
           </span>{" "}
-          con {current.professionalName}
+          con Dr/Dra {stripProfessionalTitle(current.professionalName)}
         </p>
       </div>
 

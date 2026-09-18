@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import LobiaWordmark from "@/components/LobiaWordmark";
+import { stripProfessionalTitle } from "@/lib/format";
 import logo from "@/public/logo.png";
 
 export type PublicCalledAppointment = {
@@ -86,7 +87,7 @@ export function PublicLlamadorScreen({
                 <span className="font-semibold text-primary">
                   {current.consultingRoom ?? "—"}
                 </span>{" "}
-                con {current.professionalName}
+                con Dr/Dra {stripProfessionalTitle(current.professionalName)}
               </p>
             </div>
           ) : (
