@@ -4,7 +4,12 @@ import { createProfessional } from "@/actions/admin-professionals";
 
 const ERROR_MESSAGES: Record<string, string> = {
   nombre: "Ingresá el nombre del profesional.",
+  horario: "Revisá el horario: la hora de inicio debe ser anterior a la de fin.",
 };
+
+const DAY_NAMES = [
+  "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
+];
 
 export default async function AdminProfesionalesPage({
   searchParams,
@@ -13,7 +18,7 @@ export default async function AdminProfesionalesPage({
 }) {
   const { error } = await searchParams;
 
-  const [professionals, institutions] = await Promise.all([
+  const [professionals, institutions, specialties] = await Promise.all([
     prisma.professional.findMany({
       include: {
         specialties: { include: { specialty: true } },
@@ -22,6 +27,7 @@ export default async function AdminProfesionalesPage({
       orderBy: { fullName: "asc" },
     }),
     prisma.institution.findMany({ orderBy: { name: "asc" } }),
+    prisma.specialty.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   return (
@@ -77,6 +83,136 @@ export default async function AdminProfesionalesPage({
             ))}
           </select>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="mp" className="text-sm font-medium">
+              MP (opcional)
+            </label>
+            <input
+              id="mp"
+              name="mp"
+              placeholder="Matrícula provincial"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="mn" className="text-sm font-medium">
+              MN (opcional)
+            </label>
+            <input
+              id="mn"
+              name="mn"
+              placeholder="Matrícula nacional"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="dni" className="text-sm font-medium">
+              DNI (opcional)
+            </label>
+            <input
+              id="dni"
+              name="dni"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="birthDate" className="text-sm font-medium">
+              Fecha de nacimiento (opcional)
+            </label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+
+        {specialties.length > 0 && (
+          <div>
+            <label htmlFor="specialtyId" className="text-sm font-medium">
+              Especialidad (opcional)
+            </label>
+            <select
+              id="specialtyId"
+              name="specialtyId"
+              defaultValue=""
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+            >
+              <option value="">Sin especialidad</option>
+              {specialties.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <p className="text-sm font-medium">Horario semanal (opcional)</p>
+          <p className="text-xs text-muted">
+            Se puede cargar más de uno, o agregarlos después, desde la ficha
+            del profesional.
+          </p>
+          <div className="mt-2 flex flex-wrap items-end gap-3">
+            <div>
+              <label htmlFor="dayOfWeek" className="text-sm font-medium">
+                Día
+              </label>
+              <select
+                id="dayOfWeek"
+                name="dayOfWeek"
+                className="mt-1 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              >
+                {DAY_NAMES.map((name, idx) => (
+                  <option key={idx} value={idx}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="startTime" className="text-sm font-medium">
+                Desde
+              </label>
+              <input
+                id="startTime"
+                name="startTime"
+                type="time"
+                className="mt-1 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="endTime" className="text-sm font-medium">
+                Hasta
+              </label>
+              <input
+                id="endTime"
+                name="endTime"
+                type="time"
+                className="mt-1 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="slotMinutes" className="text-sm font-medium">
+                Duración (min)
+              </label>
+              <input
+                id="slotMinutes"
+                name="slotMinutes"
+                type="number"
+                min={5}
+                step={5}
+                defaultValue={30}
+                className="mt-1 w-24 rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+        </div>
+
         <button
           type="submit"
           className="self-start rounded-md bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover"

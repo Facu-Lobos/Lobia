@@ -9,6 +9,7 @@ Motor de agenda y turnos multi-institución:
 - Roles: PATIENT, ADMIN, SPECIALIST, SECRETARY, MANAGER — permisos (17/09/2026):
   - **Admin**: todo, todas las instituciones (crea instituciones, asigna roles).
   - **Encargado (MANAGER)**: espejo del Admin acotado a su institución — crea/edita profesionales, especialidades (agregar; borrar sigue siendo admin-only por ser lista global), horarios, días adicionales, licencias, personal.
+    - El alta de profesional (18/09/2026) ya pide MP, MN, DNI, fecha de nacimiento, una especialidad y un horario semanal inicial, todos opcionales — se pueden completar ahí mismo o después desde la ficha del profesional. Mismo formulario en Admin (`Professional.mp/mn/dni/birthDate`, nuevos).
   - **Secretaria**: opera el día a día (pacientes, asignar turno, sala de espera, finanzas, facturación) y **ve** profesionales/especialidades de su institución en modo sólo lectura (`/secretaria/profesionales`, `/secretaria/especialidades`) — no puede crear ni borrar configuración.
   - **Paciente**: sus propios turnos, historia clínica y documentos.
 - Portales: público (`/profesionales`), paciente (`/mis-turnos`), especialista (`/profesional`), secretaría (`/secretaria`), encargado (`/encargado`), admin (`/admin`)

@@ -144,6 +144,11 @@ model Professional {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
+  mp        String? // Matrícula Profesional (provincial)
+  mn        String? // Matrícula Nacional
+  dni       String?
+  birthDate DateTime?
+
   // Link opcional a un login propio (rol SPECIALIST). Null = el profesional
   // todavía no tiene acceso a su portal, solo lo gestiona el admin.
   userId String? @unique

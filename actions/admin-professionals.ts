@@ -17,6 +17,7 @@ import {
   deleteLicenseForProfessional,
   updateMessagesForProfessional,
   updatePaymentSettingsForProfessional,
+  parseProfessionalIdentityInput,
 } from "@/lib/professional-mutations";
 
 export async function createProfessional(formData: FormData) {
@@ -24,13 +25,33 @@ export async function createProfessional(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const institutionId = String(formData.get("institutionId") ?? "") || null;
+  const identity = parseProfessionalIdentityInput(formData);
+  const specialtyId = String(formData.get("specialtyId") ?? "").trim();
 
   if (!fullName) {
     redirect("/admin/profesionales?error=nombre");
   }
 
+  const scheduleInput = {
+    dayOfWeek: Number(formData.get("dayOfWeek")),
+    startTime: String(formData.get("startTime") ?? "").trim(),
+    endTime: String(formData.get("endTime") ?? "").trim(),
+    slotMinutes: Number(formData.get("slotMinutes") ?? 30),
+  };
+  const hasSchedule = !!scheduleInput.startTime && !!scheduleInput.endTime;
+  if (hasSchedule && !isValidScheduleSlotInput(scheduleInput)) {
+    redirect("/admin/profesionales?error=horario");
+  }
+
   const professional = await prisma.professional.create({
-    data: { fullName, bio: bio || null, institutionId },
+    data: {
+      fullName,
+      bio: bio || null,
+      institution: institutionId ? { connect: { id: institutionId } } : undefined,
+      ...identity,
+      ...(specialtyId ? { specialties: { create: { specialtyId } } } : {}),
+      ...(hasSchedule ? { schedules: { create: scheduleInput } } : {}),
+    },
   });
 
   revalidatePath("/admin/profesionales");
@@ -45,6 +66,7 @@ export async function updateProfessional(formData: FormData) {
   const active = formData.get("active") === "on";
   const institutionId = String(formData.get("institutionId") ?? "") || null;
   const consultingRoom = String(formData.get("consultingRoom") ?? "").trim();
+  const identity = parseProfessionalIdentityInput(formData);
 
   if (!fullName) {
     redirect(`/admin/profesionales/${id}?error=nombre`);
@@ -58,6 +80,7 @@ export async function updateProfessional(formData: FormData) {
       active,
       institutionId,
       consultingRoom: consultingRoom || null,
+      ...identity,
     },
   });
 

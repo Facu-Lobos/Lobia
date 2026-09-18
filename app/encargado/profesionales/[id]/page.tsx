@@ -16,6 +16,12 @@ import {
   grantPortalAccess,
 } from "@/actions/manager";
 
+function formatDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+}
+
 function formatShortDate(date: Date) {
   return `${String(date.getDate()).padStart(2, "0")}/${String(
     date.getMonth() + 1
@@ -151,6 +157,59 @@ export default async function EncargadoProfesionalDetailPage({
             />
             Activo (visible para pacientes)
           </label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="mp" className="text-sm font-medium">
+                MP
+              </label>
+              <input
+                id="mp"
+                name="mp"
+                defaultValue={professional.mp ?? ""}
+                placeholder="Matrícula provincial"
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="mn" className="text-sm font-medium">
+                MN
+              </label>
+              <input
+                id="mn"
+                name="mn"
+                defaultValue={professional.mn ?? ""}
+                placeholder="Matrícula nacional"
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="dni" className="text-sm font-medium">
+                DNI
+              </label>
+              <input
+                id="dni"
+                name="dni"
+                defaultValue={professional.dni ?? ""}
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label htmlFor="birthDate" className="text-sm font-medium">
+                Fecha de nacimiento
+              </label>
+              <input
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                defaultValue={
+                  professional.birthDate
+                    ? formatDateInputValue(professional.birthDate)
+                    : ""
+                }
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+          </div>
           <div>
             <label htmlFor="consultingRoom" className="text-sm font-medium">
               Consultorio
