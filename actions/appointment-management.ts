@@ -25,6 +25,7 @@ function revalidateTurnosPaths() {
   revalidatePath("/encargado/llamador");
   revalidatePath("/secretaria/llamador");
   revalidatePath("/profesional/llamador");
+  revalidatePath("/llamador");
 }
 
 export async function markArrived(formData: FormData) {

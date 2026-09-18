@@ -163,6 +163,7 @@ function revalidateSalaEspera(professionalId: string) {
   revalidatePath("/secretaria/llamador");
   revalidatePath("/encargado/llamador");
   revalidatePath("/admin/llamador");
+  revalidatePath("/llamador");
 }
 
 function returnToOrDefault(formData: FormData) {
