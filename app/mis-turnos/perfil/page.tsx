@@ -6,7 +6,8 @@ import { listAllHealthInsuranceNames } from "@/lib/health-insurance";
 
 const ERROR_MESSAGES: Record<string, string> = {
   nombre: "Completá nombre y apellido.",
-  dni: "Ingresá tu número de DNI.",
+  dni: "Ingresá un DNI válido.",
+  dniexistente: "Ya existe una cuenta con ese DNI.",
 };
 
 // El nombre se guarda como un único campo ("name"); acá se separa en
@@ -26,10 +27,15 @@ function formatDateInputValue(date: Date) {
 export default async function MiPerfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ actualizado?: string; error?: string }>;
+  searchParams: Promise<{
+    actualizado?: string;
+    error?: string;
+    usuario?: string;
+    clave?: string;
+  }>;
 }) {
   const sessionUser = await requireUser();
-  const { actualizado, error } = await searchParams;
+  const { actualizado, error, usuario, clave } = await searchParams;
 
   const [user, healthInsuranceOptions] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } }),
@@ -49,7 +55,14 @@ export default async function MiPerfilPage({
       </Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">Mi perfil</h1>
 
-      {actualizado && (
+      {actualizado && usuario && clave && (
+        <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
+          Datos actualizados. Tu usuario para entrar ahora es{" "}
+          <span className="font-medium">{usuario}</span> y tu contraseña{" "}
+          <span className="font-medium">{clave}</span>.
+        </p>
+      )}
+      {actualizado && !(usuario && clave) && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
           Datos actualizados.
         </p>

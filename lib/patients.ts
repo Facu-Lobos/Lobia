@@ -17,8 +17,52 @@ export type CreatePatientResult =
   | { ok: true; userId: string; username: string; rawPassword: string }
   | { ok: false; error: string };
 
-function normalizeDni(value: string): string {
+export function normalizeDni(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+export type DniSyncResult =
+  | {
+      ok: true;
+      dni: string;
+      changed: boolean;
+      extra: { username?: string; passwordHash?: string };
+      rawPassword?: string;
+    }
+  | { ok: false; error: string };
+
+// Cuando un paciente viejo (de antes de que el DNI fuera el usuario de
+// acceso) carga o cambia su DNI desde "Mi perfil", hay que sincronizar
+// username/contraseña también — si no, quedaría con un DNI guardado que
+// nunca sirve para entrar. Sólo toca la contraseña si el DNI realmente
+// cambió (no en cada guardado del perfil).
+export async function resolveDniSync(
+  userId: string,
+  currentDni: string | null,
+  dniRaw: string
+): Promise<DniSyncResult> {
+  const dni = normalizeDni(dniRaw);
+  if (dni.length < 6) {
+    return { ok: false, error: "Ingresá un DNI válido." };
+  }
+  if (currentDni === dni) {
+    return { ok: true, dni, changed: false, extra: {} };
+  }
+
+  const existing = await prisma.user.findUnique({ where: { username: dni } });
+  if (existing && existing.id !== userId) {
+    return { ok: false, error: "Ya existe una cuenta con ese DNI." };
+  }
+
+  const rawPassword = dni.slice(-3);
+  const passwordHash = await bcrypt.hash(rawPassword, 10);
+  return {
+    ok: true,
+    dni,
+    changed: true,
+    extra: { username: dni, passwordHash },
+    rawPassword,
+  };
 }
 
 // El paciente pide email (para las notificaciones de turnos) pero entra con
