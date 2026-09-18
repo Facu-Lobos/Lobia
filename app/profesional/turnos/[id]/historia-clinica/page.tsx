@@ -9,7 +9,7 @@ import {
 import { listDocumentsForPatient } from "@/lib/documents";
 import {
   updatePatientAntecedentsFromAppointment,
-  upsertClinicalNote,
+  addClinicalNote,
   uploadClinicalDocument,
 } from "@/actions/specialist";
 
@@ -17,6 +17,12 @@ function formatDate(date: Date) {
   return `${String(date.getDate()).padStart(2, "0")}/${String(
     date.getMonth() + 1
   ).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+function formatDateTime(date: Date) {
+  return `${formatDate(date)} ${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes()
+  ).padStart(2, "0")}`;
 }
 
 export default async function HistoriaClinicaPage({
@@ -37,18 +43,25 @@ export default async function HistoriaClinicaPage({
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    include: { patient: true, clinicalNote: true },
+    include: { patient: true },
   });
   if (!appointment) notFound();
   if (appointment.professionalId !== professional.id) {
     redirect("/profesional/turnos?error=noautorizado");
   }
 
-  const [antecedents, otherNotes, documents] = await Promise.all([
+  const [antecedents, allNotes, documents] = await Promise.all([
     getPatientAntecedents(appointment.patientId),
-    listClinicalNotesForPatient(appointment.patientId, appointmentId),
+    listClinicalNotesForPatient(appointment.patientId),
     listDocumentsForPatient(appointment.patientId),
   ]);
+
+  const notesForThisVisit = allNotes.filter(
+    (note) => note.appointmentId === appointmentId
+  );
+  const otherNotes = allNotes.filter(
+    (note) => note.appointmentId !== appointmentId
+  );
 
   return (
     <div>
@@ -149,62 +162,87 @@ export default async function HistoriaClinicaPage({
 
       <section className="mt-10">
         <h2 className="font-medium">Evolución de esta consulta</h2>
+        <p className="text-sm text-muted">
+          Texto libre. Cada vez que guardás se agrega como una entrada nueva
+          — el campo queda en blanco para seguir escribiendo.
+        </p>
+
+        {notesForThisVisit.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {notesForThisVisit.map((note) => (
+              <div
+                key={note.id}
+                className="rounded-md border border-border bg-surface px-4 py-3 text-sm"
+              >
+                <p className="text-xs text-muted">
+                  {formatDateTime(note.createdAt)}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap">{note.text}</p>
+                {note.linkUrl && (
+                  <a
+                    href={note.linkUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    {note.linkUrl}
+                  </a>
+                )}
+                {note.document && (
+                  <a
+                    href={`/api/documents/${note.document.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    📎 {note.document.title}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <form
-          action={upsertClinicalNote}
+          action={addClinicalNote}
           className="mt-3 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
         >
           <input type="hidden" name="appointmentId" value={appointment.id} />
           <div>
-            <label htmlFor="reason" className="text-sm font-medium">
-              Motivo de consulta
-            </label>
-            <input
-              id="reason"
-              name="reason"
-              defaultValue={appointment.clinicalNote?.reason ?? ""}
-              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="diagnosis" className="text-sm font-medium">
-              Diagnóstico
-            </label>
-            <input
-              id="diagnosis"
-              name="diagnosis"
-              defaultValue={appointment.clinicalNote?.diagnosis ?? ""}
-              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="notes" className="text-sm font-medium">
-              Notas / examen
-            </label>
             <textarea
-              id="notes"
-              name="notes"
-              rows={3}
-              defaultValue={appointment.clinicalNote?.notes ?? ""}
+              id="text"
+              name="text"
+              required
+              rows={4}
+              placeholder="Escribí la evolución del paciente..."
               className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
             />
           </div>
-          <div>
-            <label htmlFor="treatment" className="text-sm font-medium">
-              Indicaciones / tratamiento
-            </label>
-            <textarea
-              id="treatment"
-              name="treatment"
-              rows={3}
-              defaultValue={appointment.clinicalNote?.treatment ?? ""}
-              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
-            />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1">
+              <label htmlFor="linkUrl" className="text-sm font-medium">
+                Link (opcional)
+              </label>
+              <input
+                id="linkUrl"
+                name="linkUrl"
+                type="url"
+                placeholder="Ej: link a un estudio online"
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="file" className="text-sm font-medium">
+                Adjuntar imagen (opcional)
+              </label>
+              <input id="file" name="file" type="file" accept="image/*,.pdf" className="mt-1 w-full text-sm" />
+            </div>
           </div>
           <button
             type="submit"
             className="self-start rounded-md bg-primary px-4 py-2 font-medium text-white hover:bg-primary-hover"
           >
-            Guardar evolución
+            Guardar
           </button>
         </form>
       </section>
@@ -232,10 +270,10 @@ export default async function HistoriaClinicaPage({
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="file" className="text-sm font-medium">
+            <label htmlFor="docFile" className="text-sm font-medium">
               Archivo
             </label>
-            <input id="file" name="file" type="file" required className="mt-1 w-full text-sm" />
+            <input id="docFile" name="file" type="file" required className="mt-1 w-full text-sm" />
           </div>
           <button
             type="submit"
@@ -277,15 +315,26 @@ export default async function HistoriaClinicaPage({
                   {formatDate(note.appointment.date)} ·{" "}
                   {note.appointment.professional.fullName}
                 </p>
-                {note.reason && <p className="mt-1">Motivo: {note.reason}</p>}
-                {note.diagnosis && (
-                  <p className="mt-1">Diagnóstico: {note.diagnosis}</p>
+                <p className="mt-1 whitespace-pre-wrap text-muted">{note.text}</p>
+                {note.linkUrl && (
+                  <a
+                    href={note.linkUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    {note.linkUrl}
+                  </a>
                 )}
-                {note.notes && <p className="mt-1 text-muted">{note.notes}</p>}
-                {note.treatment && (
-                  <p className="mt-1 text-muted">
-                    Indicaciones: {note.treatment}
-                  </p>
+                {note.document && (
+                  <a
+                    href={`/api/documents/${note.document.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-primary hover:underline"
+                  >
+                    📎 {note.document.title}
+                  </a>
                 )}
               </div>
             ))}

@@ -24,36 +24,32 @@ export async function upsertPatientAntecedents(
 }
 
 export type ClinicalNoteInput = {
-  reason: string | null;
-  diagnosis: string | null;
-  notes: string | null;
-  treatment: string | null;
+  text: string;
+  linkUrl: string | null;
+  documentId: string | null;
 };
 
-export async function upsertClinicalNoteForAppointment(
+// A diferencia de antes, esto siempre agrega una entrada nueva a la
+// bitácora — nunca pisa una anterior. Cada click en "Guardar" es una
+// evolución más, no una edición de la última.
+export async function addClinicalNoteForAppointment(
   appointmentId: string,
   input: ClinicalNoteInput
 ) {
-  return prisma.clinicalNote.upsert({
-    where: { appointmentId },
-    create: { appointmentId, ...input },
-    update: input,
+  return prisma.clinicalNote.create({
+    data: { appointmentId, ...input },
   });
 }
 
 // Historial del paciente para dar contexto al profesional que lo atiende
-// (incluye notas de otros profesionales). `excludeAppointmentId` deja afuera
-// la nota que se está editando en ese momento, para no duplicarla en pantalla.
-export async function listClinicalNotesForPatient(
-  patientId: string,
-  excludeAppointmentId?: string
-) {
+// (incluye notas de otros profesionales, y de otros turnos del mismo).
+export async function listClinicalNotesForPatient(patientId: string) {
   return prisma.clinicalNote.findMany({
-    where: {
-      appointment: { patientId },
-      ...(excludeAppointmentId ? { appointmentId: { not: excludeAppointmentId } } : {}),
+    where: { appointment: { patientId } },
+    include: {
+      appointment: { include: { professional: true } },
+      document: true,
     },
-    include: { appointment: { include: { professional: true } } },
     orderBy: { createdAt: "desc" },
   });
 }

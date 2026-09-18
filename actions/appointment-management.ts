@@ -21,6 +21,10 @@ function revalidateTurnosPaths() {
   revalidatePath("/admin/sala-espera");
   revalidatePath("/encargado/sala-espera");
   revalidatePath("/secretaria/sala-espera");
+  revalidatePath("/admin/llamador");
+  revalidatePath("/encargado/llamador");
+  revalidatePath("/secretaria/llamador");
+  revalidatePath("/profesional/llamador");
 }
 
 export async function markArrived(formData: FormData) {

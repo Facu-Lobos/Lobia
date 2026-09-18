@@ -17,7 +17,7 @@ export async function listDocumentsForPatient(patientId: string) {
 }
 
 export type SaveDocumentResult =
-  | { ok: true }
+  | { ok: true; documentId: string }
   | { ok: false; error: string };
 
 export async function saveUploadedDocument({
@@ -53,7 +53,7 @@ export async function saveUploadedDocument({
     return { ok: false, error: "No se pudo subir el archivo. Probá de nuevo." };
   }
 
-  await prisma.patientDocument.create({
+  const document = await prisma.patientDocument.create({
     data: {
       patientId,
       uploadedById,
@@ -64,7 +64,7 @@ export async function saveUploadedDocument({
     },
   });
 
-  return { ok: true };
+  return { ok: true, documentId: document.id };
 }
 
 export async function readDocumentFile(storagePath: string) {

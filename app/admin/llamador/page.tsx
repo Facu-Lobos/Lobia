@@ -14,8 +14,10 @@ export default async function AdminLlamadorPage() {
   const appointments = await prisma.appointment.findMany({
     where: {
       status: "BOOKED",
-      date: { gte: todayStart, lt: todayEnd },
-      calledAt: { not: null },
+      // Filtra por cuándo se llamó (no por la fecha del turno): si el
+      // profesional avanzó a un turno agendado para otro día, igual tiene
+      // que aparecer acá mientras lo esté atendiendo ahora.
+      calledAt: { gte: todayStart, lt: todayEnd },
       completedAt: null,
     },
     include: { professional: true, patient: true },

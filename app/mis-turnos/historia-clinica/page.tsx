@@ -68,14 +68,26 @@ export default async function MiHistoriaClinicaPage() {
                 {formatDate(note.appointment.date)} ·{" "}
                 {note.appointment.professional.fullName}
               </p>
-              {note.reason && <p className="mt-1">Motivo: {note.reason}</p>}
-              {note.diagnosis && (
-                <p className="mt-1">Diagnóstico: {note.diagnosis}</p>
+              <p className="mt-1 whitespace-pre-wrap">{note.text}</p>
+              {note.linkUrl && (
+                <a
+                  href={note.linkUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-primary hover:underline"
+                >
+                  {note.linkUrl}
+                </a>
               )}
-              {note.treatment && (
-                <p className="mt-1 text-muted">
-                  Indicaciones: {note.treatment}
-                </p>
+              {note.document && (
+                <a
+                  href={`/api/documents/${note.document.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-primary hover:underline"
+                >
+                  📎 {note.document.title}
+                </a>
               )}
             </div>
           ))}

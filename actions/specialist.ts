@@ -21,7 +21,7 @@ import {
 } from "@/lib/professional-mutations";
 import {
   upsertPatientAntecedents,
-  upsertClinicalNoteForAppointment,
+  addClinicalNoteForAppointment,
 } from "@/lib/clinical";
 import { saveUploadedDocument } from "@/lib/documents";
 
@@ -159,6 +159,10 @@ export async function updateOwnMessages(formData: FormData) {
 function revalidateSalaEspera(professionalId: string) {
   revalidatePath("/profesional/sala-espera");
   revalidatePath(`/profesionales/${professionalId}`);
+  revalidatePath("/profesional/llamador");
+  revalidatePath("/secretaria/llamador");
+  revalidatePath("/encargado/llamador");
+  revalidatePath("/admin/llamador");
 }
 
 function returnToOrDefault(formData: FormData) {
@@ -262,10 +266,13 @@ export async function updatePatientAntecedentsFromAppointment(formData: FormData
   redirect(`${historiaPath}?actualizado=1`);
 }
 
-export async function upsertClinicalNote(formData: FormData) {
-  const { professional } = await requireSpecialist();
+export async function addClinicalNote(formData: FormData) {
+  const { professional, user } = await requireSpecialist();
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const historiaPath = `/profesional/turnos/${appointmentId}/historia-clinica`;
+  const text = String(formData.get("text") ?? "").trim();
+  const linkUrl = emptyToNull(String(formData.get("linkUrl") ?? ""));
+  const file = formData.get("file");
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
@@ -274,11 +281,28 @@ export async function upsertClinicalNote(formData: FormData) {
     redirect("/profesional/turnos?error=noautorizado");
   }
 
-  await upsertClinicalNoteForAppointment(appointmentId, {
-    reason: emptyToNull(String(formData.get("reason") ?? "")),
-    diagnosis: emptyToNull(String(formData.get("diagnosis") ?? "")),
-    notes: emptyToNull(String(formData.get("notes") ?? "")),
-    treatment: emptyToNull(String(formData.get("treatment") ?? "")),
+  if (!text) {
+    redirect(`${historiaPath}?error=Escrib%C3%AD%20algo%20en%20la%20evoluci%C3%B3n.`);
+  }
+
+  let documentId: string | null = null;
+  if (file instanceof File && file.size > 0) {
+    const result = await saveUploadedDocument({
+      patientId: appointment.patientId,
+      uploadedById: user.id,
+      title: "Adjunto de evolución",
+      file,
+    });
+    if (!result.ok) {
+      redirect(`${historiaPath}?error=${encodeURIComponent(result.error)}`);
+    }
+    documentId = result.documentId;
+  }
+
+  await addClinicalNoteForAppointment(appointmentId, {
+    text,
+    linkUrl,
+    documentId,
   });
 
   revalidatePath(historiaPath);
