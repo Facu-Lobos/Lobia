@@ -45,3 +45,6 @@ next-env.d.ts
 # database
 *.db
 *.db-journal
+
+# legacy reference system (not part of the app, local reference only)
+/ejemplo
