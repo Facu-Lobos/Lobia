@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { getDaySlotsForProfessional } from "@/lib/availability";
+import { getDaySlotsForProfessional, getDaySlotsForProfessionals } from "@/lib/availability";
 import { markArrived, markCalled, markCompleted } from "@/actions/appointment-management";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { DatePicker } from "@/components/DatePicker";
@@ -50,13 +50,24 @@ export default async function AdminSalaEsperaPage({
       ? prisma.scheduleSlot.findMany({ where: { professionalId: selectedProfessional.id } })
       : Promise.resolve([]),
     !selectedProfessional
-      ? Promise.all(
-          professionals.map(async (p) => ({
+      ? (async () => {
+          const ids = professionals.map((p) => p.id);
+          const [slotsByProf, allSchedules] = await Promise.all([
+            getDaySlotsForProfessionals(ids, day),
+            prisma.scheduleSlot.findMany({ where: { professionalId: { in: ids } } }),
+          ]);
+          const schedulesByProf = new Map<string, typeof allSchedules>();
+          for (const s of allSchedules) {
+            const list = schedulesByProf.get(s.professionalId) ?? [];
+            list.push(s);
+            schedulesByProf.set(s.professionalId, list);
+          }
+          return professionals.map((p) => ({
             professional: { id: p.id, fullName: p.fullName },
-            slots: await getDaySlotsForProfessional(p.id, day),
-            schedules: await prisma.scheduleSlot.findMany({ where: { professionalId: p.id } }),
-          }))
-        )
+            slots: slotsByProf.get(p.id) ?? [],
+            schedules: schedulesByProf.get(p.id) ?? [],
+          }));
+        })()
       : Promise.resolve(null),
   ]);
 

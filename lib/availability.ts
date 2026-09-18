@@ -196,51 +196,26 @@ export type DaySlot = {
   } | null;
 };
 
-// A diferencia de getAvailability/isSlotAvailableForBooking (para reservar,
-// sólo futuro y sólo libres), esto arma la grilla completa de un día puntual
-// para uso interno (sala de espera): todos los slots del horario del
-// profesional ese día, ocupados o no, pasados o futuros.
-export async function getDaySlotsForProfessional(
-  professionalId: string,
-  day: Date
-): Promise<DaySlot[]> {
-  const dayStart = new Date(day);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-  const dayOfWeek = dayStart.getDay();
+type AppointmentForSlot = {
+  id: string;
+  patientId: string;
+  date: Date;
+  status: "BOOKED" | "CANCELLED";
+  arrivedAt: Date | null;
+  calledAt: Date | null;
+  completedAt: Date | null;
+  patient: { name: string; healthInsurance: string | null };
+};
 
-  const [schedules, extraDays, license, appointments] = await Promise.all([
-    prisma.scheduleSlot.findMany({
-      where: { professionalId, dayOfWeek },
-    }),
-    prisma.extraDay.findMany({
-      where: { professionalId, date: { gte: dayStart, lt: dayEnd } },
-    }),
-    prisma.license.findFirst({
-      where: {
-        professionalId,
-        startDate: { lte: dayStart },
-        endDate: { gte: dayStart },
-      },
-    }),
-    prisma.appointment.findMany({
-      where: {
-        professionalId,
-        status: { in: ["BOOKED", "CANCELLED"] },
-        date: { gte: dayStart, lt: dayEnd },
-      },
-      include: { patient: true },
-    }),
-  ]);
-
-  if (license) return [];
-
+function buildDaySlots(
+  dayStart: Date,
+  windows: SlotWindow[],
+  appointments: AppointmentForSlot[]
+): DaySlot[] {
   const byIso = new Map(appointments.map((a) => [a.date.toISOString(), a]));
   const slots: DaySlot[] = [];
   const seen = new Set<string>();
 
-  const windows = [...schedules, ...extraDays];
   for (const window of windows) {
     const startMin = timeToMinutes(window.startTime);
     const endMin = timeToMinutes(window.endTime);
@@ -304,4 +279,106 @@ export async function getDaySlotsForProfessional(
 
   slots.sort((a, b) => a.time.localeCompare(b.time));
   return slots;
+}
+
+// A diferencia de getAvailability/isSlotAvailableForBooking (para reservar,
+// sólo futuro y sólo libres), esto arma la grilla completa de un día puntual
+// para uso interno (sala de espera): todos los slots del horario del
+// profesional ese día, ocupados o no, pasados o futuros.
+export async function getDaySlotsForProfessional(
+  professionalId: string,
+  day: Date
+): Promise<DaySlot[]> {
+  const dayStart = new Date(day);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayOfWeek = dayStart.getDay();
+
+  const [schedules, extraDays, license, appointments] = await Promise.all([
+    prisma.scheduleSlot.findMany({
+      where: { professionalId, dayOfWeek },
+    }),
+    prisma.extraDay.findMany({
+      where: { professionalId, date: { gte: dayStart, lt: dayEnd } },
+    }),
+    prisma.license.findFirst({
+      where: {
+        professionalId,
+        startDate: { lte: dayStart },
+        endDate: { gte: dayStart },
+      },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        professionalId,
+        status: { in: ["BOOKED", "CANCELLED"] },
+        date: { gte: dayStart, lt: dayEnd },
+      },
+      include: { patient: true },
+    }),
+  ]);
+
+  if (license) return [];
+
+  return buildDaySlots(dayStart, [...schedules, ...extraDays], appointments);
+}
+
+// Misma grilla que getDaySlotsForProfessional, pero para varios profesionales
+// a la vez con sólo 4 consultas en total (en vez de 4 por profesional) —
+// pensado para la vista "Todos los profesionales" de sala de espera, para no
+// disparar decenas de queries concurrentes contra el pooler de Supabase.
+export async function getDaySlotsForProfessionals(
+  professionalIds: string[],
+  day: Date
+): Promise<Map<string, DaySlot[]>> {
+  const result = new Map<string, DaySlot[]>();
+  if (professionalIds.length === 0) return result;
+
+  const dayStart = new Date(day);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayOfWeek = dayStart.getDay();
+
+  const [schedules, extraDays, licenses, appointments] = await Promise.all([
+    prisma.scheduleSlot.findMany({
+      where: { professionalId: { in: professionalIds }, dayOfWeek },
+    }),
+    prisma.extraDay.findMany({
+      where: { professionalId: { in: professionalIds }, date: { gte: dayStart, lt: dayEnd } },
+    }),
+    prisma.license.findMany({
+      where: {
+        professionalId: { in: professionalIds },
+        startDate: { lte: dayStart },
+        endDate: { gte: dayStart },
+      },
+    }),
+    prisma.appointment.findMany({
+      where: {
+        professionalId: { in: professionalIds },
+        status: { in: ["BOOKED", "CANCELLED"] },
+        date: { gte: dayStart, lt: dayEnd },
+      },
+      include: { patient: true },
+    }),
+  ]);
+
+  const licensedIds = new Set(licenses.map((l) => l.professionalId));
+
+  for (const id of professionalIds) {
+    if (licensedIds.has(id)) {
+      result.set(id, []);
+      continue;
+    }
+    const windows = [
+      ...schedules.filter((s) => s.professionalId === id),
+      ...extraDays.filter((e) => e.professionalId === id),
+    ];
+    const apptsForProf = appointments.filter((a) => a.professionalId === id);
+    result.set(id, buildDaySlots(dayStart, windows, apptsForProf));
+  }
+
+  return result;
 }

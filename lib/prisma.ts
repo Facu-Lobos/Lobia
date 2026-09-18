@@ -6,7 +6,15 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  // Supabase pooler (session mode) sólo admite 15 conexiones totales para
+  // todo el proyecto — un `max` bajo evita que esta sola instancia se
+  // quede con la mayoría, y un idleTimeout corto libera conexiones ociosas
+  // rápido (importante en dev, con hot-reload y varias pestañas abiertas).
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+    max: 5,
+    idleTimeoutMillis: 10_000,
+  });
   return new PrismaClient({ adapter });
 }
 
