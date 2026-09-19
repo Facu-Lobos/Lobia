@@ -1,7 +1,21 @@
 import Link from "next/link";
 import type { DaySlot } from "@/lib/availability";
+import type { NomencladorOption } from "@/lib/nomenclador";
+import { ChargeButton } from "@/components/ChargeButton";
+import { AssignSlotButton } from "@/components/AssignSlotButton";
 
 type QueueAction = (formData: FormData) => void | Promise<void>;
+
+export type BillingConfig = {
+  nomencladores: NomencladorOption[];
+  chargesByAppointmentId: Record<string, number>;
+};
+
+export type AssignmentConfig = {
+  professionalId: string;
+  professionalName: string;
+  dayLabel: string;
+};
 
 function StatusBadge({ slot }: { slot: DaySlot }) {
   const a = slot.appointment;
@@ -77,6 +91,8 @@ export function DaySlotGrid({
   markCalledAction,
   markCompletedAction,
   getPatientHref,
+  billing,
+  assignment,
 }: {
   slots: DaySlot[];
   returnTo: string;
@@ -87,6 +103,12 @@ export function DaySlotGrid({
   // clínica; el resto de los roles (secretaría, encargado, admin) lo
   // muestran como texto plano.
   getPatientHref?: (slot: DaySlot) => string | undefined;
+  // Secretaría/encargado/admin: click en el paciente abre el modal de
+  // cobro por nomenclador.
+  billing?: BillingConfig;
+  // Secretaría/encargado/admin: click en una casilla vacía abre el modal
+  // de asignar turno, precargado con este profesional/fecha/hora.
+  assignment?: AssignmentConfig;
 }) {
   if (slots.length === 0) {
     return (
@@ -119,7 +141,15 @@ export function DaySlotGrid({
                 <td className="px-3 py-2 font-medium">{slot.time}</td>
                 <td className="px-3 py-2">
                   {slot.appointment ? (
-                    href ? (
+                    billing && slot.appointment.status !== "CANCELLED" ? (
+                      <ChargeButton
+                        appointmentId={slot.appointment.id}
+                        patientName={slot.appointment.patientName}
+                        healthInsurance={slot.appointment.healthInsurance}
+                        nomencladores={billing.nomencladores}
+                        chargedAmount={billing.chargesByAppointmentId[slot.appointment.id]}
+                      />
+                    ) : href ? (
                       <Link
                         href={href}
                         className="text-primary hover:underline"
@@ -129,6 +159,14 @@ export function DaySlotGrid({
                     ) : (
                       slot.appointment.patientName
                     )
+                  ) : assignment ? (
+                    <AssignSlotButton
+                      professionalId={assignment.professionalId}
+                      professionalName={assignment.professionalName}
+                      dayLabel={assignment.dayLabel}
+                      time={slot.time}
+                      dateIso={slot.iso}
+                    />
                   ) : (
                     "—"
                   )}

@@ -20,6 +20,8 @@ export default async function EncargadoLayout({
           { href: "/encargado/sala-espera", label: "Sala de espera" },
           { href: "/encargado/llamador", label: "Llamador" },
           { href: "/encargado/obras-sociales", label: "Obras sociales" },
+          { href: "/encargado/nomenclador", label: "Nomenclador" },
+          { href: "/encargado/caja", label: "Caja" },
           { href: "/encargado/liquidacion", label: "Liquidación" },
           { href: "/encargado/finanzas", label: "Finanzas" },
           { href: "/encargado/facturacion", label: "Facturación" },

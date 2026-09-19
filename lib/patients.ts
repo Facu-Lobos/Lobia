@@ -2,6 +2,39 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+export type PatientBrief = {
+  id: string;
+  name: string;
+  dni: string | null;
+  healthInsurance: string | null;
+};
+
+// Búsqueda liviana para el modal de "Asignar turno" al hacer click en una
+// casilla vacía de la grilla — no navega a /pacientes, se resuelve en el
+// mismo modal.
+export async function searchPatientsBrief(
+  query: string,
+  take = 8
+): Promise<PatientBrief[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const patients = await prisma.user.findMany({
+    where: {
+      role: "PATIENT",
+      OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { dni: { contains: q } },
+      ],
+    },
+    orderBy: { name: "asc" },
+    take,
+    select: { id: true, name: true, dni: true, healthInsurance: true },
+  });
+
+  return patients;
+}
+
 export type CreatePatientInput = {
   firstName: string;
   lastName: string;

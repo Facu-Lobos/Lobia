@@ -30,6 +30,8 @@ model Institution {
   professionals Professional[]
   healthInsurances HealthInsurance[]
   transactions  Transaction[]
+  nomencladores Nomenclador[]
+  cajas         Caja[]
 }
 
 // Obra social que una institución acepta. Configurable por Encargado (la
@@ -85,6 +87,8 @@ model User {
   invoicesReceived Invoice[]     @relation("InvoicePatient")
   invoicesIssued   Invoice[]     @relation("InvoiceIssuedBy")
   transactionsLogged Transaction[]
+  cajasOpened Caja[] @relation("CajaOpenedBy")
+  cajasClosed Caja[] @relation("CajaClosedBy")
 
   @@index([institutionId])
 }
@@ -296,16 +300,104 @@ model Transaction {
 // facturas fiscales de verdad requiere CUIT + certificado digital +
 // homologación de punto de venta (WSFE) que este sistema todavía no tiene
 // configurado. Sirve como recibo para el paciente mientras tanto.
+//
+// `amount`/`concept` son el modo viejo (un solo monto manual, "Generar
+// comprobante" desde Historial en Turnos) y se mantienen por compatibilidad.
+// El cobro por nomenclador (click en la casilla del turno) usa `items` en
+// cambio, y `amount` queda como el total (suma de los renglones) para no
+// tener que sumarlos cada vez que se muestra en Facturación.
 model Invoice {
-  id             String   @id @default(cuid())
-  appointmentId  String?  @unique
+  id             String        @id @default(cuid())
+  appointmentId  String?       @unique
   patientId      String
   concept        String
   amount         Int
+  paymentMethod  PaymentMethod?
+  cajaId         String?
   createdById    String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime      @default(now())
 
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
   patient     User         @relation("InvoicePatient", fields: [patientId], references: [id])
   createdBy   User?        @relation("InvoiceIssuedBy", fields: [createdById], references: [id])
+  caja        Caja?        @relation(fields: [cajaId], references: [id])
+  items       InvoiceItem[]
+}
+
+// Código del nomenclador propio de la institución (no el Nomenclador
+// Nacional completo — cada institución carga sólo los códigos/prácticas que
+// realmente usa, con un valor de referencia). Ver `NomencladorValor` para
+// valores distintos por obra social.
+model Nomenclador {
+  id            String   @id @default(cuid())
+  institutionId String
+  code          String
+  description   String
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  institution Institution        @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  values      NomencladorValor[]
+  items       InvoiceItem[]
+
+  @@unique([institutionId, code])
+}
+
+// Valor de un código del nomenclador para una obra social puntual.
+// healthInsurance = "" representa "Particular" (sin obra social), tratada
+// como un plan más — mismo criterio que usan los sistemas de gestión reales.
+model NomencladorValor {
+  id              String @id @default(cuid())
+  nomencladorId   String
+  healthInsurance String
+  value           Int
+
+  nomenclador Nomenclador @relation(fields: [nomencladorId], references: [id], onDelete: Cascade)
+
+  @@unique([nomencladorId, healthInsurance])
+}
+
+// Renglón de un comprobante: una práctica/código del nomenclador (o un ítem
+// suelto sin código) con cantidad y valor unitario editable al momento de
+// cobrar, aunque haya un valor de referencia cargado.
+model InvoiceItem {
+  id            String @id @default(cuid())
+  invoiceId     String
+  nomencladorId String?
+  description   String
+  quantity      Int    @default(1)
+  unitValue     Int
+  subtotal      Int
+
+  invoice     Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  nomenclador Nomenclador? @relation(fields: [nomencladorId], references: [id])
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  DEBITO
+  CREDITO
+  TRANSFERENCIA
+}
+
+// Sesión de caja: se abre al empezar el día/turno (con un fondo inicial
+// opcional) y todo lo que se cobra por nomenclador mientras está abierta
+// queda vinculado a ella. Se cierra con el monto contado, para comparar
+// contra lo que el sistema dice que debería haber.
+model Caja {
+  id            String    @id @default(cuid())
+  institutionId String
+  openedById    String
+  openedAt      DateTime  @default(now())
+  openingAmount Int       @default(0)
+  closedById    String?
+  closedAt      DateTime?
+  closingAmount Int?
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  openedBy    User        @relation("CajaOpenedBy", fields: [openedById], references: [id])
+  closedBy    User?       @relation("CajaClosedBy", fields: [closedById], references: [id])
+  invoices    Invoice[]
+
+  @@index([institutionId, openedAt])
 }

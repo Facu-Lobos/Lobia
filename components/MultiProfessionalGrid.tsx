@@ -1,7 +1,7 @@
 import type { DaySlot } from "@/lib/availability";
 import type { WeekSchedule } from "@/components/WeeklyHoursStrip";
 import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
-import { DaySlotGrid } from "@/components/DaySlotGrid";
+import { DaySlotGrid, type BillingConfig } from "@/components/DaySlotGrid";
 
 type QueueAction = (formData: FormData) => void | Promise<void>;
 
@@ -20,12 +20,18 @@ export function MultiProfessionalGrid({
   markArrivedAction,
   markCalledAction,
   markCompletedAction,
+  billing,
+  dayLabel,
+  canAssign,
 }: {
   data: ProfessionalDayData[];
   returnTo: string;
   markArrivedAction: QueueAction;
   markCalledAction: QueueAction;
   markCompletedAction: QueueAction;
+  billing?: BillingConfig;
+  dayLabel?: string;
+  canAssign?: boolean;
 }) {
   if (data.length === 0) {
     return <p className="py-6 text-sm text-muted">No hay profesionales cargados.</p>;
@@ -46,6 +52,12 @@ export function MultiProfessionalGrid({
               markArrivedAction={markArrivedAction}
               markCalledAction={markCalledAction}
               markCompletedAction={markCompletedAction}
+              billing={billing}
+              assignment={
+                canAssign && dayLabel
+                  ? { professionalId: professional.id, professionalName: professional.fullName, dayLabel }
+                  : undefined
+              }
             />
           </div>
         </div>

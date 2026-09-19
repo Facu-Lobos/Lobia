@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional, getDaySlotsForProfessionals } from "@/lib/availability";
@@ -8,6 +9,9 @@ import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
 import { MultiProfessionalGrid } from "@/components/MultiProfessionalGrid";
 import { dayParam, parseDayParam, parseMonthParam } from "@/components/AppointmentCalendar";
+import { listNomencladorOptions } from "@/lib/nomenclador";
+import { getChargesMapForAppointments } from "@/lib/charges";
+import { getOpenCaja } from "@/lib/caja";
 
 const DAY_NAMES = [
   "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
@@ -71,9 +75,50 @@ export default async function AdminSalaEsperaPage({
       : Promise.resolve(null),
   ]);
 
+  // Sólo se puede cobrar/asignar directo desde la grilla cuando hay un
+  // profesional puntual elegido: nomenclador y caja son por institución, y
+  // la vista "Todos" mezcla profesionales de instituciones distintas.
+  const selectedInstitutionId = selectedProfessional?.institutionId ?? null;
+
+  const [nomencladores, chargesByAppointmentId, openCaja] = selectedInstitutionId
+    ? await Promise.all([
+        listNomencladorOptions(selectedInstitutionId),
+        getChargesMapForAppointments(
+          (daySlots ?? []).map((s) => s.appointment?.id).filter((id): id is string => !!id)
+        ),
+        getOpenCaja(selectedInstitutionId),
+      ])
+    : [[], {}, null];
+
+  const billing = selectedInstitutionId ? { nomencladores, chargesByAppointmentId } : undefined;
+  const dayLabelForAssign = formatDayLabel(day);
+
   return (
     <div>
       <AutoRefresh />
+
+      {selectedProfessional && !selectedInstitutionId && (
+        <p className="mb-4 rounded-md bg-danger-bg px-4 py-3 text-sm text-danger">
+          Este profesional no tiene institución asignada — no se puede
+          cobrar ni asignar turnos directo desde acá hasta que la tenga.
+        </p>
+      )}
+      {selectedInstitutionId && !openCaja && (
+        <p className="mb-4 rounded-md bg-primary-soft px-4 py-3 text-sm text-foreground">
+          La caja de esta institución está cerrada — se puede seguir
+          asignando turnos, pero para cobrar hay que{" "}
+          <Link href="/admin/caja" className="font-medium text-primary underline">
+            abrirla primero
+          </Link>
+          .
+        </p>
+      )}
+      {!selectedProfessional && (
+        <p className="mb-4 rounded-md bg-primary-soft px-4 py-3 text-sm text-foreground">
+          Elegí un profesional puntual para poder cobrar o asignar turnos
+          directo desde la grilla (acá se mezclan instituciones distintas).
+        </p>
+      )}
       <h1 className="text-2xl font-semibold tracking-tight">Sala de espera</h1>
       <p className="mt-1 text-muted">
         En vivo, por día y profesional, en todas las instituciones.
@@ -134,6 +179,16 @@ export default async function AdminSalaEsperaPage({
             markArrivedAction={markArrived}
             markCalledAction={markCalled}
             markCompletedAction={markCompleted}
+            billing={billing}
+            assignment={
+              selectedInstitutionId
+                ? {
+                    professionalId: selectedProfessional.id,
+                    professionalName: selectedProfessional.fullName,
+                    dayLabel: dayLabelForAssign,
+                  }
+                : undefined
+            }
           />
         ) : (
           <MultiProfessionalGrid

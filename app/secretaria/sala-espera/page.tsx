@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSecretary } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional, getDaySlotsForProfessionals } from "@/lib/availability";
@@ -8,6 +9,9 @@ import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
 import { MultiProfessionalGrid } from "@/components/MultiProfessionalGrid";
 import { dayParam, parseDayParam, parseMonthParam } from "@/components/AppointmentCalendar";
+import { listNomencladorOptions } from "@/lib/nomenclador";
+import { getChargesMapForAppointments } from "@/lib/charges";
+import { getOpenCaja } from "@/lib/caja";
 
 const DAY_NAMES = [
   "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
@@ -73,9 +77,39 @@ export default async function SecretariaSalaEsperaPage({
       : Promise.resolve(null),
   ]);
 
+  const appointmentIds = (
+    daySlots
+      ? daySlots
+      : (allProfessionalsData ?? []).flatMap((d) => d.slots)
+  )
+    .map((s) => s.appointment?.id)
+    .filter((id): id is string => !!id);
+
+  const [nomencladores, chargesByAppointmentId, openCaja] = institutionId
+    ? await Promise.all([
+        listNomencladorOptions(institutionId),
+        getChargesMapForAppointments(appointmentIds),
+        getOpenCaja(institutionId),
+      ])
+    : [[], {}, null];
+
+  const billing = { nomencladores, chargesByAppointmentId };
+  const dayLabelForAssign = formatDayLabel(day);
+
   return (
     <div>
       <AutoRefresh />
+
+      {!openCaja && (
+        <p className="mb-4 rounded-md bg-primary-soft px-4 py-3 text-sm text-foreground">
+          La caja está cerrada — se puede seguir asignando turnos, pero para
+          cobrar hay que{" "}
+          <Link href="/secretaria/caja" className="font-medium text-primary underline">
+            abrirla primero
+          </Link>
+          .
+        </p>
+      )}
       <h1 className="text-2xl font-semibold tracking-tight">Sala de espera</h1>
       <p className="mt-1 text-muted">En vivo, por día y profesional.</p>
 
@@ -134,6 +168,12 @@ export default async function SecretariaSalaEsperaPage({
             markArrivedAction={markArrived}
             markCalledAction={markCalled}
             markCompletedAction={markCompleted}
+            billing={billing}
+            assignment={{
+              professionalId: selectedProfessional.id,
+              professionalName: selectedProfessional.fullName,
+              dayLabel: dayLabelForAssign,
+            }}
           />
         ) : (
           <MultiProfessionalGrid
@@ -142,6 +182,9 @@ export default async function SecretariaSalaEsperaPage({
             markArrivedAction={markArrived}
             markCalledAction={markCalled}
             markCompletedAction={markCompleted}
+            billing={billing}
+            dayLabel={dayLabelForAssign}
+            canAssign
           />
         )}
       </div>
