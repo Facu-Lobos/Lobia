@@ -1,3 +1,4 @@
+import { LlamadorChime } from "@/components/LlamadorChime";
 import { stripProfessionalTitle } from "@/lib/format";
 
 export type CalledPatient = {
@@ -20,6 +21,7 @@ export function CallerScreen({ patients }: { patients: CalledPatient[] }) {
   if (patients.length === 0) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center rounded-lg border border-border bg-surface">
+        <LlamadorChime currentId={null} />
         <p className="text-2xl text-muted">Sin pacientes en consulta.</p>
       </div>
     );
@@ -29,6 +31,7 @@ export function CallerScreen({ patients }: { patients: CalledPatient[] }) {
 
   return (
     <div>
+      <LlamadorChime currentId={current.id} />
       <div className="rounded-lg border-2 border-primary bg-primary-soft p-8 text-center">
         <p className="text-5xl font-bold text-foreground">
           {current.patientName}
