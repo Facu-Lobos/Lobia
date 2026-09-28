@@ -3,9 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { requireSpecialist } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import {
-  getPatientAntecedents,
+  listAntecedentsHistory,
   listClinicalNotesForPatient,
 } from "@/lib/clinical";
+import { AntecedentsVersions } from "@/components/AntecedentsVersions";
 import { listDocumentsForPatient } from "@/lib/documents";
 import {
   updatePatientAntecedentsFromAppointment,
@@ -50,11 +51,13 @@ export default async function HistoriaClinicaPage({
     redirect("/profesional/turnos?error=noautorizado");
   }
 
-  const [antecedents, allNotes, documents] = await Promise.all([
-    getPatientAntecedents(appointment.patientId),
+  const [antecedentsHistory, allNotes, documents] = await Promise.all([
+    listAntecedentsHistory(appointment.patientId),
     listClinicalNotesForPatient(appointment.patientId),
     listDocumentsForPatient(appointment.patientId),
   ]);
+
+  const antecedents = antecedentsHistory[0] ?? null;
 
   const notesForThisVisit = allNotes.filter(
     (note) => note.appointmentId === appointmentId
@@ -71,10 +74,24 @@ export default async function HistoriaClinicaPage({
       >
         ← Volver a Turnos
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        Historia clínica — {appointment.patient.name}
-      </h1>
-      <p className="mt-1 text-muted">Consulta del {formatDate(appointment.date)}</p>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Historia clínica — {appointment.patient.name}
+          </h1>
+          <p className="mt-1 text-muted">
+            Consulta del {formatDate(appointment.date)}
+          </p>
+        </div>
+        <a
+          href={`/imprimir/historia-clinica/${appointment.patientId}`}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:border-primary"
+        >
+          Imprimir historia clínica
+        </a>
+      </div>
 
       {(actualizado || guardado) && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
@@ -96,7 +113,8 @@ export default async function HistoriaClinicaPage({
         <h2 className="font-medium">Antecedentes</h2>
         <p className="text-sm text-muted">
           Compartidos entre todos los profesionales que atienden a este
-          paciente.
+          paciente. Cada vez que guardás se agrega una versión nueva y las
+          anteriores quedan registradas — no se pisan ni se borran.
         </p>
         <form
           action={updatePatientAntecedentsFromAppointment}
@@ -158,13 +176,17 @@ export default async function HistoriaClinicaPage({
             Guardar antecedentes
           </button>
         </form>
+        <AntecedentsVersions entries={antecedentsHistory} />
       </section>
 
       <section className="mt-10">
         <h2 className="font-medium">Evolución de esta consulta</h2>
         <p className="text-sm text-muted">
           Texto libre. Cada vez que guardás se agrega como una entrada nueva
-          — el campo queda en blanco para seguir escribiendo.
+          — el campo queda en blanco para seguir escribiendo. Lo guardado no
+          se puede modificar ni borrar: si necesitás corregir algo (por
+          ejemplo un diagnóstico), escribí una entrada nueva aclarando que la
+          anterior no era correcta.
         </p>
 
         {notesForThisVisit.length > 0 && (

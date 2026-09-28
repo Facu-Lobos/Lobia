@@ -54,6 +54,8 @@ export function ChargeButton({
   const [rows, setRows] = useState<Row[]>([blankRow()]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
   const [error, setError] = useState<string | null>(null);
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const plan = healthInsurance ?? "";
@@ -67,9 +69,12 @@ export function ChargeButton({
   async function handleOpen() {
     setOpen(true);
     setError(null);
+    setSaved(false);
+    setInvoiceId(null);
     setLoadingInitial(true);
     try {
       const existing = await getAppointmentChargeAction(appointmentId);
+      setInvoiceId(existing?.id ?? null);
       if (existing && existing.items.length > 0) {
         setRows(
           existing.items.map((it) => ({
@@ -129,7 +134,8 @@ export function ChargeButton({
         setError(ERROR_MESSAGES[result.error] ?? "No se pudo guardar el cobro.");
         return;
       }
-      setOpen(false);
+      setInvoiceId(result.invoiceId);
+      setSaved(true);
       router.refresh();
     });
   }
@@ -163,10 +169,46 @@ export function ChargeButton({
             </div>
             <p className="mt-1 text-sm text-muted">
               {patientName} · {healthInsurance || "Particular"}
+              {invoiceId && !saved && (
+                <>
+                  {" · "}
+                  <a
+                    href={`/imprimir/bono/${invoiceId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Imprimir bono
+                  </a>
+                </>
+              )}
             </p>
 
             {loadingInitial ? (
               <p className="mt-6 text-sm text-muted">Cargando…</p>
+            ) : saved && invoiceId ? (
+              <div className="mt-6">
+                <p className="rounded-md bg-success-bg px-4 py-3 text-sm text-success">
+                  Cobro guardado · Total ${total}
+                </p>
+                <div className="mt-5 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md border border-border px-4 py-2 text-sm hover:border-primary"
+                  >
+                    Cerrar
+                  </button>
+                  <a
+                    href={`/imprimir/bono/${invoiceId}?auto=1`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+                  >
+                    Imprimir bono
+                  </a>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="mt-4 overflow-x-auto">

@@ -10,7 +10,7 @@ export default async function ProfesionalLayout({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <nav className="mb-8 flex gap-1 border-b border-border pb-0 text-sm">
+      <nav className="mb-8 flex gap-1 print:hidden border-b border-border pb-0 text-sm">
         {[
           { href: "/profesional", label: "Inicio" },
           { href: "/profesional/agenda", label: "Agenda" },

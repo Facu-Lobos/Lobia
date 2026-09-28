@@ -20,7 +20,7 @@ import {
   updatePaymentSettingsForProfessional,
 } from "@/lib/professional-mutations";
 import {
-  upsertPatientAntecedents,
+  addAntecedentsEntry,
   addClinicalNoteForAppointment,
 } from "@/lib/clinical";
 import { saveUploadedDocument } from "@/lib/documents";
@@ -244,7 +244,7 @@ function emptyToNull(value: string) {
 }
 
 export async function updatePatientAntecedentsFromAppointment(formData: FormData) {
-  const { professional } = await requireSpecialist();
+  const { user, professional } = await requireSpecialist();
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const historiaPath = `/profesional/turnos/${appointmentId}/historia-clinica`;
 
@@ -255,12 +255,17 @@ export async function updatePatientAntecedentsFromAppointment(formData: FormData
     redirect("/profesional/turnos?error=noautorizado");
   }
 
-  await upsertPatientAntecedents(appointment.patientId, {
-    allergies: emptyToNull(String(formData.get("allergies") ?? "")),
-    chronicConditions: emptyToNull(String(formData.get("chronicConditions") ?? "")),
-    currentMedications: emptyToNull(String(formData.get("currentMedications") ?? "")),
-    notes: emptyToNull(String(formData.get("antecedentsNotes") ?? "")),
-  });
+  // Agrega una versión nueva (no pisa la anterior); ver lib/clinical.ts.
+  await addAntecedentsEntry(
+    appointment.patientId,
+    {
+      allergies: emptyToNull(String(formData.get("allergies") ?? "")),
+      chronicConditions: emptyToNull(String(formData.get("chronicConditions") ?? "")),
+      currentMedications: emptyToNull(String(formData.get("currentMedications") ?? "")),
+      notes: emptyToNull(String(formData.get("antecedentsNotes") ?? "")),
+    },
+    user.id
+  );
 
   revalidatePath(historiaPath);
   revalidatePath("/mis-turnos/historia-clinica");

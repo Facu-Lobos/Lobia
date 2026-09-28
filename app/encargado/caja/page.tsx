@@ -57,7 +57,15 @@ export default async function EncargadoCajaPage({
       )}
       {cerrada && (
         <p className="mt-4 rounded-md bg-success-bg px-4 py-3 text-sm text-success">
-          Caja cerrada.
+          Caja cerrada.{" "}
+          <a
+            href={`/imprimir/caja/${cerrada}?auto=1`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium underline"
+          >
+            Imprimir cierre
+          </a>
         </p>
       )}
 
@@ -72,7 +80,17 @@ export default async function EncargadoCajaPage({
                 {summary.caja.openingAmount}
               </p>
             </div>
-            <p className="text-2xl font-semibold text-primary">${summary.total}</p>
+            <div className="text-right">
+              <p className="text-2xl font-semibold text-primary">${summary.total}</p>
+              <a
+                href={`/imprimir/caja/${summary.caja.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                Imprimir parcial
+              </a>
+            </div>
           </div>
 
           {Object.keys(summary.byMethod).length > 0 && (
@@ -161,9 +179,19 @@ export default async function EncargadoCajaPage({
                   {c._count.invoices} cobro(s)
                 </p>
               </div>
-              {c.closingAmount !== null && (
-                <p className="font-medium">Contado: ${c.closingAmount}</p>
-              )}
+              <div className="flex items-center gap-4">
+                {c.closingAmount !== null && (
+                  <p className="font-medium">Contado: ${c.closingAmount}</p>
+                )}
+                <a
+                  href={`/imprimir/caja/${c.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Imprimir
+                </a>
+              </div>
             </div>
           ))}
           {history.length === 0 && (

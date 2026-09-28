@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth-helpers";
 import {
-  getPatientAntecedents,
+  listAntecedentsHistory,
   listClinicalNotesForPatient,
 } from "@/lib/clinical";
+import { AntecedentsVersions } from "@/components/AntecedentsVersions";
 
 function formatDate(date: Date) {
   return `${String(date.getDate()).padStart(2, "0")}/${String(
@@ -14,19 +15,31 @@ function formatDate(date: Date) {
 export default async function MiHistoriaClinicaPage() {
   const user = await requireUser();
 
-  const [antecedents, notes] = await Promise.all([
-    getPatientAntecedents(user.id),
+  const [antecedentsHistory, notes] = await Promise.all([
+    listAntecedentsHistory(user.id),
     listClinicalNotesForPatient(user.id),
   ]);
+
+  const antecedents = antecedentsHistory[0] ?? null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <Link href="/mis-turnos" className="text-sm text-muted hover:text-foreground">
         ← Volver a Mis Turnos
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-        Mi historia clínica
-      </h1>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Mi historia clínica
+        </h1>
+        <a
+          href={`/imprimir/historia-clinica/${user.id}`}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:border-primary"
+        >
+          Imprimir
+        </a>
+      </div>
 
       <section className="mt-6">
         <h2 className="font-medium">Antecedentes</h2>
@@ -54,6 +67,7 @@ export default async function MiHistoriaClinicaPage() {
             </p>
           </div>
         )}
+        <AntecedentsVersions entries={antecedentsHistory} />
       </section>
 
       <section className="mt-10">

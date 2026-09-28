@@ -10,7 +10,7 @@ export default async function Header() {
   const user = session?.user;
 
   return (
-    <header className="bg-primary text-white">
+    <header className="bg-primary text-white print:hidden">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-3">
           <Image

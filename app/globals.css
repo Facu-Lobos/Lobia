@@ -28,3 +28,9 @@ body {
   background: var(--color-accent);
   color: white;
 }
+
+@media print {
+  body {
+    background: #fff;
+  }
+}

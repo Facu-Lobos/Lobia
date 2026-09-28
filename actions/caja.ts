@@ -74,5 +74,5 @@ export async function closeCajaAction(formData: FormData) {
   });
 
   revalidateCajaPaths();
-  redirect(`${base}?cerrada=1`);
+  redirect(`${base}?cerrada=${cajaId}`);
 }

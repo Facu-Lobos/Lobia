@@ -20,7 +20,11 @@ export async function getInvoice(id: string) {
     include: {
       patient: true,
       createdBy: true,
-      appointment: { include: { professional: true } },
+      items: { include: { nomenclador: true }, orderBy: { description: "asc" } },
+      caja: true,
+      appointment: {
+        include: { professional: { include: { institution: true } } },
+      },
     },
   });
 }

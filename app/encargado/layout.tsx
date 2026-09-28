@@ -10,7 +10,7 @@ export default async function EncargadoLayout({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <nav className="mb-8 flex gap-1 border-b border-border pb-0 text-sm">
+      <nav className="mb-8 flex gap-1 print:hidden border-b border-border pb-0 text-sm">
         {[
           { href: "/encargado", label: "Inicio" },
           { href: "/encargado/pacientes", label: "Pacientes" },
