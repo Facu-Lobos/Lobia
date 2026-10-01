@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional, getDaySlotsForProfessionals } from "@/lib/availability";
 import { markArrived, markCalled, markCompleted } from "@/actions/appointment-management";
-import { AutoRefresh } from "@/components/AutoRefresh";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { DatePicker } from "@/components/DatePicker";
 import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
@@ -95,7 +95,7 @@ export default async function AdminSalaEsperaPage({
 
   return (
     <div>
-      <AutoRefresh />
+      <RealtimeRefresh institutionId={null} />
 
       {selectedProfessional && !selectedInstitutionId && (
         <p className="mb-4 rounded-md bg-danger-bg px-4 py-3 text-sm text-danger">

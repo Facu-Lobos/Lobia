@@ -12,5 +12,5 @@ export const metadata = {
 
 export default async function PublicLlamadorPage() {
   const appointments = await getCalledAppointments(null);
-  return <PublicLlamadorScreen appointments={appointments} />;
+  return <PublicLlamadorScreen appointments={appointments} institutionId={null} />;
 }

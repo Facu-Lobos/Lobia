@@ -5,6 +5,7 @@ import { requireAppointmentStaff } from "@/lib/auth-helpers";
 import { professionalInInstitution } from "@/lib/institution-scope";
 import { searchPatientsBrief } from "@/lib/patients";
 import { createBooking } from "@/lib/booking";
+import { notifyTurnosChangedForProfessional } from "@/lib/realtime";
 
 // Búsqueda en vivo para el modal de "Asignar turno" al hacer click en una
 // casilla vacía de la grilla.
@@ -43,6 +44,7 @@ export async function assignAppointmentAtSlotAction(input: {
     revalidatePath("/secretaria/turnos");
     revalidatePath("/encargado/turnos");
     revalidatePath("/admin/turnos");
+    notifyTurnosChangedForProfessional(input.professionalId);
   }
 
   return result;

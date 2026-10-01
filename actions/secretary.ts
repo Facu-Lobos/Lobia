@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireSecretary } from "@/lib/auth-helpers";
 import { createPatientUser } from "@/lib/patients";
 import { createBooking } from "@/lib/booking";
+import { notifyTurnosChangedForProfessional } from "@/lib/realtime";
 import { professionalInInstitution } from "@/lib/institution-scope";
 import { saveUploadedDocument } from "@/lib/documents";
 import { parseDateOnlyLocal } from "@/lib/dates";
@@ -65,6 +66,7 @@ export async function assignAppointment(formData: FormData) {
   revalidatePath("/admin/turnos");
   revalidatePath("/encargado/turnos");
   revalidatePath("/secretaria/turnos");
+  notifyTurnosChangedForProfessional(professionalId);
   redirect(`${backTo}&asignado=1&asignadoFecha=${encodeURIComponent(dateISO)}`);
 }
 

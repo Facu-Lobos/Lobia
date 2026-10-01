@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { AutoRefresh } from "@/components/AutoRefresh";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { LlamadorChime } from "@/components/LlamadorChime";
 import LobiaWordmark from "@/components/LobiaWordmark";
 import { stripProfessionalTitle } from "@/lib/format";
@@ -27,14 +27,16 @@ function formatTime(date: Date) {
 // ancho.
 export function PublicLlamadorScreen({
   appointments,
+  institutionId,
 }: {
   appointments: PublicCalledAppointment[];
+  institutionId: string | null;
 }) {
   const [current, ...rest] = appointments;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <AutoRefresh intervalMs={8000} />
+      <RealtimeRefresh institutionId={institutionId} />
       <LlamadorChime currentId={current?.id ?? null} />
 
       <header className="flex items-center gap-3 bg-primary px-6 py-4 text-white">

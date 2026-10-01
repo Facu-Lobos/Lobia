@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { createBooking } from "@/lib/booking";
 import { sendCancellationNotice } from "@/lib/appointment-notifications";
+import {
+  notifyTurnosChanged,
+  notifyTurnosChangedForProfessional,
+} from "@/lib/realtime";
 
 export async function bookAppointment(formData: FormData) {
   const user = await requireUser();
@@ -25,6 +29,7 @@ export async function bookAppointment(formData: FormData) {
 
   revalidatePath(`/profesionales/${professionalId}`);
   revalidatePath("/mis-turnos");
+  notifyTurnosChangedForProfessional(professionalId);
   redirect(`/mis-turnos?reservado=1&profesionalId=${professionalId}`);
 }
 
@@ -82,6 +87,7 @@ export async function cancelAppointment(formData: FormData) {
   revalidatePath("/secretaria/turnos");
   revalidatePath("/profesional/turnos");
   revalidatePath(`/profesionales/${appointment.professionalId}`);
+  notifyTurnosChanged(appointment.professional.institutionId);
 
   const redirectBase =
     user.role === "ADMIN"

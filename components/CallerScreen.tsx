@@ -16,7 +16,7 @@ function formatTime(date: Date) {
 }
 
 // Pantalla pensada para un TV/monitor en la sala de espera física: texto
-// grande, se refresca sola (ver AutoRefresh en la página), sin acciones.
+// grande, se refresca sola (ver RealtimeRefresh en la página), sin acciones.
 export function CallerScreen({ patients }: { patients: CalledPatient[] }) {
   if (patients.length === 0) {
     return (

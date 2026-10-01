@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAppointmentStaff } from "@/lib/auth-helpers";
 import { appointmentInInstitution } from "@/lib/institution-scope";
 import { rescheduleBooking } from "@/lib/booking";
+import { notifyTurnosChangedForAppointment } from "@/lib/realtime";
 import type { AppRole } from "@/types/roles";
 
 function redirectBaseFor(role: AppRole) {
@@ -48,6 +49,7 @@ export async function markArrived(formData: FormData) {
   });
 
   revalidateTurnosPaths();
+  notifyTurnosChangedForAppointment(appointmentId);
   if (returnTo) {
     redirect(
       `${returnTo}${returnTo.includes("?") ? "&" : "?"}llegada=1`
@@ -74,6 +76,7 @@ export async function markCalled(formData: FormData) {
   });
 
   revalidateTurnosPaths();
+  notifyTurnosChangedForAppointment(appointmentId);
   redirect(returnTo);
 }
 
@@ -95,6 +98,7 @@ export async function markCompleted(formData: FormData) {
   });
 
   revalidateTurnosPaths();
+  notifyTurnosChangedForAppointment(appointmentId);
   redirect(returnTo);
 }
 
@@ -122,5 +126,6 @@ export async function rescheduleAppointment(formData: FormData) {
   }
 
   revalidateTurnosPaths();
+  notifyTurnosChangedForAppointment(appointmentId);
   redirect(`${base}?reprogramado=1`);
 }

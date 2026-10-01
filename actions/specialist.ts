@@ -24,6 +24,7 @@ import {
   addClinicalNoteForAppointment,
 } from "@/lib/clinical";
 import { saveUploadedDocument } from "@/lib/documents";
+import { notifyTurnosChanged } from "@/lib/realtime";
 
 export async function setOwnConsultingRoom(formData: FormData) {
   const { professional } = await requireSpecialist();
@@ -46,6 +47,7 @@ export async function setOwnConsultingRoom(formData: FormData) {
   });
 
   revalidatePath("/profesional/llamador");
+  notifyTurnosChanged(professional.institutionId);
   redirect("/profesional");
 }
 
@@ -156,14 +158,18 @@ export async function updateOwnMessages(formData: FormData) {
   redirect("/profesional/mensajes?actualizado=1");
 }
 
-function revalidateSalaEspera(professionalId: string) {
+function revalidateSalaEspera(professional: {
+  id: string;
+  institutionId: string | null;
+}) {
   revalidatePath("/profesional/sala-espera");
-  revalidatePath(`/profesionales/${professionalId}`);
+  revalidatePath(`/profesionales/${professional.id}`);
   revalidatePath("/profesional/llamador");
   revalidatePath("/secretaria/llamador");
   revalidatePath("/encargado/llamador");
   revalidatePath("/admin/llamador");
   revalidatePath("/llamador");
+  notifyTurnosChanged(professional.institutionId);
 }
 
 function returnToOrDefault(formData: FormData) {
@@ -181,7 +187,7 @@ export async function markOwnArrived(formData: FormData) {
     data: { arrivedAt: new Date() },
   });
 
-  revalidateSalaEspera(professional.id);
+  revalidateSalaEspera(professional);
   redirect(returnTo);
 }
 
@@ -200,7 +206,7 @@ export async function markOwnCalled(formData: FormData) {
     data: { calledAt: new Date() },
   });
 
-  revalidateSalaEspera(professional.id);
+  revalidateSalaEspera(professional);
   redirect(returnTo);
 }
 
@@ -219,7 +225,7 @@ export async function markOwnCompleted(formData: FormData) {
     data: { completedAt: new Date() },
   });
 
-  revalidateSalaEspera(professional.id);
+  revalidateSalaEspera(professional);
   redirect(returnTo);
 }
 

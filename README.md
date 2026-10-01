@@ -77,6 +77,17 @@ Variables de entorno:
 - `SUPABASE_URL` — `https://<project-ref>.supabase.co`.
 - `SUPABASE_SERVICE_ROLE_KEY` — key de servidor (bypassea RLS). **Nunca** exponerla al cliente/navegador; sólo se usa en `lib/documents.ts` y `lib/supabase.ts`, ambos server-only.
 
+## Llamador y sala de espera en vivo (Supabase Realtime)
+
+Llamador y sala de espera no se refrescan por polling (eso agotaba las invocaciones del plan Hobby de Vercel): cuando una acción cambia un turno, `lib/realtime.ts` manda un *broadcast* al canal `turnos:<institutionId>` (y a `turnos:todas`), y `components/RealtimeRefresh.tsx` hace `router.refresh()` al recibirlo. El mensaje no lleva datos de pacientes, sólo "algo cambió". Queda un refresh de respaldo cada 5 minutos.
+
+Variables de entorno (públicas, van al navegador):
+
+- `NEXT_PUBLIC_SUPABASE_URL` — la misma URL que `SUPABASE_URL`.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — la anon/publishable key (Supabase → Project Settings → API). **No** la service_role.
+
+Sin estas variables las pantallas vuelven a refrescarse cada 15 s.
+
 ## Mi perfil (paciente)
 
 Desde `/mis-turnos/perfil` el paciente edita nombre, teléfono, obra social y número de afiliado (`actions/patient.ts`). El email no es editable ahí (es el identificador de login).

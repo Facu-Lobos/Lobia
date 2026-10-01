@@ -2,7 +2,7 @@ import { requireSpecialist } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional } from "@/lib/availability";
 import { markOwnArrived, markOwnCalled, markOwnCompleted } from "@/actions/specialist";
-import { AutoRefresh } from "@/components/AutoRefresh";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { DatePicker } from "@/components/DatePicker";
 import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
@@ -38,7 +38,7 @@ export default async function ProfesionalSalaEsperaPage({
 
   return (
     <div>
-      <AutoRefresh />
+      <RealtimeRefresh institutionId={professional.institutionId} />
       <h1 className="text-2xl font-semibold tracking-tight">Sala de espera</h1>
       <p className="mt-1 text-muted">Tus turnos, en vivo.</p>
 

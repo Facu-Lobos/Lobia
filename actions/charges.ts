@@ -9,6 +9,7 @@ import {
   type ChargeItemInput,
 } from "@/lib/charges";
 import { prisma } from "@/lib/prisma";
+import { notifyTurnosChanged } from "@/lib/realtime";
 
 // Llamado directo desde el modal "Cobrar" en la grilla (client component),
 // no desde un <form action>: recibe un objeto ya armado y devuelve un
@@ -49,6 +50,7 @@ export async function chargeAppointmentAction(input: {
     revalidatePath("/secretaria/sala-espera");
     revalidatePath("/encargado/sala-espera");
     revalidatePath("/admin/sala-espera");
+    notifyTurnosChanged(appointment.professional.institutionId);
   }
 
   return result;

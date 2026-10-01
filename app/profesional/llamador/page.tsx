@@ -2,7 +2,7 @@ import { requireSpecialist } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { toMidnight } from "@/lib/professional-mutations";
 import { CallerScreen } from "@/components/CallerScreen";
-import { AutoRefresh } from "@/components/AutoRefresh";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 
 export default async function ProfesionalLlamadorPage() {
   const { professional } = await requireSpecialist();
@@ -30,7 +30,7 @@ export default async function ProfesionalLlamadorPage() {
 
   return (
     <div>
-      <AutoRefresh intervalMs={8000} />
+      <RealtimeRefresh institutionId={professional.institutionId} />
       <h1 className="text-2xl font-semibold tracking-tight">Llamador</h1>
       <p className="mt-1 text-muted">
         Pantalla para mostrar en la sala de espera.

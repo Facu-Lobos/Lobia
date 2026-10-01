@@ -27,5 +27,10 @@ export default async function PublicLlamadorPorInstitucionPage({
   if (!institution) notFound();
 
   const appointments = await getCalledAppointments(institution.id);
-  return <PublicLlamadorScreen appointments={appointments} />;
+  return (
+    <PublicLlamadorScreen
+      appointments={appointments}
+      institutionId={institution.id}
+    />
+  );
 }

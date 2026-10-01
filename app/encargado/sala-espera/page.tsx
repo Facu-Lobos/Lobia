@@ -3,7 +3,7 @@ import { requireManager } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { getDaySlotsForProfessional, getDaySlotsForProfessionals } from "@/lib/availability";
 import { markArrived, markCalled, markCompleted } from "@/actions/appointment-management";
-import { AutoRefresh } from "@/components/AutoRefresh";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { DatePicker } from "@/components/DatePicker";
 import { WeeklyHoursStrip } from "@/components/WeeklyHoursStrip";
 import { DaySlotGrid } from "@/components/DaySlotGrid";
@@ -98,7 +98,7 @@ export default async function EncargadoSalaEsperaPage({
 
   return (
     <div>
-      <AutoRefresh />
+      <RealtimeRefresh institutionId={institutionId} />
 
       {!openCaja && (
         <p className="mb-4 rounded-md bg-primary-soft px-4 py-3 text-sm text-foreground">
